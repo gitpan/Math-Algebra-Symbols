@@ -3,7 +3,7 @@
 # Symbolic algebra.
 # Perl License.
 # PhilipRBrenan@yahoo.com, 2004.
-# Log
+#:folding=indent:
 #______________________________________________________________________
 
 package Math::Algebra::Symbols;
@@ -11,7 +11,7 @@ use strict;
 use Carp;
 use Math::BigInt;
 
-$symbols::VERSION = '1.02';
+$symbols::VERSION = '1.03';
 
 #______________________________________________________________________
 # Overload.
@@ -87,6 +87,8 @@ sub import
   my $s = <<'END';
 package XXXX;
 
+BEGIN  {delete $XXXX::{NNNN}}
+
 sub NNNN
  {return SSSS::symbols(@_);
  }
@@ -97,6 +99,8 @@ END
 #______________________________________________________________________
 
   $s .= <<'END' if defined($p{complex});
+
+BEGIN  {delete @XXXX::{qw(conjugate cross dot im modulus re unit)}}
 
 sub conjugate($)  {SSSS::conjugate($_[0])}
 sub cross    ($$) {SSSS::cross    ($_[0], $_[1])}
@@ -113,6 +117,8 @@ END
 
   $s .= <<'END' if defined($p{trig}) or defined($p{trigonometric});
 
+BEGIN  {delete @XXXX::{qw(tan sec csc cot)}}
+
 sub tan($) {SSSS::tan($_[0])}
 sub sec($) {SSSS::sec($_[0])}
 sub csc($) {SSSS::csc($_[0])}
@@ -124,6 +130,8 @@ END
 #______________________________________________________________________
 
   $s .= <<'END' if defined($p{hyper}) or defined($p{hyperbolic});
+
+BEGIN  {delete @XXXX::{qw(sinh cosh tanh sech csch coth)}}
 
 sub sinh($) {SSSS::sinh($_[0])}
 sub cosh($) {SSSS::cosh($_[0])}
@@ -390,15 +398,13 @@ sub getVPSort($)
  }
 
 #______________________________________________________________________
-# Get variable names from an expression.
+# Get variable names from an expression - go deep.
 #______________________________________________________________________
 
 sub getVE($);
 sub getVE($)
- {my $e = $_[0];
-  my %v;
-
-  for my $t(@$e) 
+ {my %v;
+  for my $t(@{$_[0]}) 
    {$v{$_} = 1 for(keys(%{$t->{v}}));
     for my $s(qw(sqrt divide exp log))
      {%v = (%v, %{getVE($t->{$s})}) if exists($t->{$s});
@@ -569,7 +575,7 @@ sub print3
  }
 
 #______________________________________________________________________
-# Add a term.  Return undef if the terms are cannot be added.
+# Add a term.  Return undef if the terms cannot be added.
 #______________________________________________________________________
 
 sub addTerm($$)
@@ -1690,19 +1696,6 @@ sub sub($@)
  }
 
 #______________________________________________________________________
-# Get differentrix
-#______________________________________________________________________
-
-sub getDifferentrix($)
- {my $e = shift; # Expression
-
-  my $v = getVE($e);
-  scalar(keys(%$v)) != 0 or croak "Please specify variable to be differentiated by";
-  scalar(keys(%$v)) == 1 or croak "Please specify single variable to be differentiated by";
-  (keys(%$v))[0];
- }
-
-#______________________________________________________________________
 # Differentiate.
 #______________________________________________________________________
 
@@ -1712,12 +1705,22 @@ sub d($;$)
   my $b = $_[1]; # With this variable
 
 #______________________________________________________________________
-# Get differentrix
+# Get differentrix. Assume 'x' or 't' if appropriate.
 #______________________________________________________________________
 
-  $b =~ /^[a-zA-Z]+$/ or croak "Invalid differentrix: $b" if defined($b) and !ref($b);
-  $b = getDifferentrix($b) if  defined($b) and ref $b eq ref bless {};
-  $b = getDifferentrix($c) if !defined($b);
+  if (defined($b) and !ref $b)
+   {$b =~ /^[a-zA-Z]+$/ or croak "Cannot differentiate by '$b'";
+   }
+  else
+   {my %b = %{getVE($b)};
+       %b = %{getVE($c)} unless scalar(keys(%b));
+    $b = 'x'     if scalar(keys(%b)) == 0;
+    $b = (%b)[0] if scalar(keys(%b)) == 1;
+    $b = 'x'     if scalar(keys(%b)) > 1 and exists($b{x}) and !exists($b{t});
+    $b = 't'     if scalar(keys(%b)) > 1 and exists($b{t}) and !exists($b{x});
+    defined($b) or 
+      croak "Please specify a single variable to differentiate by";
+   }
 
 #______________________________________________________________________
 # Each term
@@ -2148,24 +2151,26 @@ sub polynomialDivision($$)
  {my ($a, $b) = (new($_[0]), new($_[1]));
   my $na = polynomialDegree($a);
   my $nb = polynomialDegree($b);
-  return (new(0), $a) if $nb == 0 or $na < $nb;
+  return (new(0), $a) if $na < $nb;
 
   my $d = new(0);       # Result
   my $B = new(pop @$b); # Highest power of b
   my $i = invert($B);   # Inverted highest power of b
   defined($i) or return (new(0), $a); # Unable to divide 
 
-  for(;my $A = new(pop @$a);)
-   {my $c = multiply($A, $i);  # Simple divide should work
+  for(my $k = 0; $k <= $na; ++$k)         # Limit the loop
+   {my $A = new(pop @$a); 
+    my $c = multiply($A, $i);  # Simple divide should work
     $d += $c; 
     $a -= $c * $b;
+    return ($d, $a) if scalar(@$a) == 0;  # Single term
+#   print "\n\nAAAA a=$a d=$d b=$b c=$c n=$n na=$na b=$nb\n";
     my $n = polynomialDegree($a);
-    return ($d, $a)        if $n < $nb;
-    return (new(0), $_[0]) if $n > $na;
+    return ($d, $a)        if $n < $nb;   # Pointlessly small
+    return (new(0), $_[0]) if $n > $na;   # Blowing up
    }
-  die "polynomialDivision";
-#print "ZZZZ Result=$d\nRemainder=$a\n";
-#  ($d, $a);
+#  print "ZZZZ Result=$d  Remainder=$a\n";
+  ($d, $a);
  }
 
 #______________________________________________________________________
@@ -2351,7 +2356,7 @@ sub testEllipse
 # General tests.
 #______________________________________________________________________
 
-sub generalTests()
+sub testGeneral()
  {my $errors = 0;
  
 #______________________________________________________________________
@@ -2601,13 +2606,286 @@ sub generalTests()
  }
 
 #______________________________________________________________________
+# Check test results
+#______________________________________________________________________
+
+sub checkTest($$$)
+ {my $t = shift;       # Test number
+  my @a = @{shift()};  # Tests
+  my $b = shift();     # Expected results
+  my $l = '';
+  my $e = 0;           # Error state
+
+# Very crude formatting of results
+
+  for my $e(@a)
+   {my $t = $e;
+    $t  = "  $e\n" if ref($e) or $e =~ /^\d+$/;
+    $t .= "\n\n"   if length($t) > 40 and ref($e);
+    $l .= $t;
+   }
+  $l =~ s/\=\ \ /\=/g;
+
+  print "\nTest $t\n$l\nTest ";
+
+# Remove spaces and compare results - error location would be helpful        
+
+  my $c = $b;
+     $c =~ s/\s+//sg;
+     $l =~ s/\s+//sg;
+
+# Print and return test results
+
+  print("$t: Fail:\n\n$b\n"), ++$e unless $l eq $c;
+  print "$t: OK\n"                 if     $l eq $c;
+  $e;
+ }
+
+#______________________________________________________________________
+# Tests replicating the work of Steffen Muller from CPAN.
+#______________________________________________________________________
+
+sub testSM
+ {my $e = 0;
+  my $t = sub {$e += checkTest($_[0],$_[1],$_[2])};
+
+#______________________________________________________________________
+# SM: Test 07
+#______________________________________________________________________
+
+   {my ($a, $b, $c, $n, $x) = symbols(qw(a b c n x));
+    &$t('SM07',  [ #---------------------------------------------------
+
+"Differentiate sin(nx)+cos(nx) 4 times and check for eigenvalue:\n", 
+"  A = sin(nx)+cos(nx) = ", $a = sin($n*$x) + cos($n*$x), 
+"  B = (d/dx)**4 of A  = ", $b = $a->d->d->d->d, 
+"  B/A                 = ", $b/$a, 
+"  Should be equal to:   $n**4 ? ", $b/$a == $n**4 ? 'True' : 'FAlSE', "\n", 
+
+], << 'END' #----------------------------------------------------------
+
+Differentiate sin(nx)+cos(nx) 4 times and check for eigenvalue:
+
+  A = sin(nx)+cos(nx) = $i*exp(-$i*$n*$x)-$i*exp($ i*$n*$x)
+                          +exp( $i*$n*$x)+   exp(-$i*$n*$x)
+
+  B = (d/dx)**4 of A  = $i*exp(-$i*$n*$x)*$n**4-$i*exp( $i*$n*$x)*$n**4
+                          +exp( $i*$n*$x)*$n**4+   exp(-$i*$n*$x)*$n**4
+
+  B/A                 = $n**4
+  Should be equal to:   $n**4 ? True
+
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# Return error count for this test suite
+#______________________________________________________________________
+
+  [$e, 'Steffen Mueller Tests'];
+ }
+
+#______________________________________________________________________
+# Conics tests.
+#______________________________________________________________________
+
+sub testConics
+ {my $e = 0;
+  my $t = sub {$e += checkTest($_[0],$_[1],$_[2])};
+
+#______________________________________________________________________
+# Symbolic algebra.
+#______________________________________________________________________
+
+   {my ($a, $b, $x, $y, $R, $f, $i, $o) = symbols(qw(a b x y R f i 1));
+
+    &$t(1,  [ #--------------------------------------------------------
+
+"Algebraic operations:\n\n", 
+  sin($x)**2 + cos($x)**2,           # Pythagoras 
+  $x**8 - 1,                         # Symbolic multiplication
+ ($x**8 - 1) /  ($x**4+1),           # Polynomial division
+ ($x**8 - 1) /  ($x-1),                 
+ ($x**2 - 1) / (($x-1) * ($x+1)),                        
+ ($x + $i)**8,                       # i = sqrt(-1)
+  abs(!($x+$y*$i)*!($a+$b*$i)) == 1, # Length of product of units 
+
+], << 'END' #----------------------------------------------------------
+
+Algebraic operations:
+  1
+  -1+$x**8
+  -1+$x**4
+  1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
+  1
+  1-8*$i*$x-28*$x**2+56*$i*$x**3+70*$x**4-56*$i*$x**5-28*$x**6+8*$i*$x**7+$x**8
+  1
+
+END
+);          #----------------------------------------------------------
+
+   }
+
+#______________________________________________________________________
+# Ellipse: Focus Trip: Distance from focus to locus to other focus
+#______________________________________________________________________
+
+  print "\nConic invariants:\n";
+
+   {my ($a, $b, $x, $y, $z, $R, $f, $i, $o) = symbols(qw(a b x y z R f i 1));
+
+    &$t(2,  [ #--------------------------------------------------------
+
+"Ellipse:\n",
+"  Locus:          y=",
+      $y = sqrt($R*$R-$f*$f - $x*$x+$f*$f*$x*$x / ($R*$R)),
+
+"  At x=0:         y=",     $y->sub(x=>0),
+"  At x=1 f=1 R=2: y=",     $y->sub(x=>1, f=>1, R=>2),
+"  at x=R:         y=",     $y->sub(x=>$R), 
+
+"\nFocus trip: distance from focus to locus to other focus =\n",
+
+  $z =  abs($x+$i*$y - $f) + abs($x+$i*$y + $f),
+ ($z == 2*$R ? "  Equals" : "  DOES NOT EQUAL"). " 2R\n",
+
+], << 'END' #----------------------------------------------------------
+
+Ellipse:
+  Locus:          y=sqrt($R**4-$R**2*$f**2-$R**2*$x**2+$f**2*$x**2)/$R
+  At x=0:         y=sqrt($R**4-$R**2*$f**2)/$R
+  At x=1 f=1 R=2: y=3/2
+  at x=R:         y=0
+
+Focus trip: distance from focus to locus to other focus =
+     sqrt($R**4-2*$R**2*$f*$x+$f**2*$x**2)/$R
+    +sqrt($R**4+2*$R**2*$f*$x+$f**2*$x**2)/$R
+  Equals 2R
+END
+);          #----------------------------------------------------------
+   }
+ 
+#______________________________________________________________________
+# Parabola:  Focusing to infinity
+#______________________________________________________________________
+
+   {my ($a, $b, $d, $x, $y, $z, $R, $f, $i, $o) = symbols(qw(a b d x y z R f i 1));
+
+    &$t(3,  [ #--------------------------------------------------------
+
+"Parabola: Focussing to infinity\n",
+"  From focus to locus:    ",        $a = $x + $i * $x**2 - $i/4,
+"  Vertical of same length:",        $b = $i * abs($a),
+"  Tangent vector to locus:",        $d =  1 + 2*$x*$i,
+"  Compare angles via dot: ",        $z = ($a ^ $d) - ($b ^ $d),
+($z == 0 ? "  Focusses to infinity\n"
+         : "  DOES NOT FOCUS TO INFINITY\n"),
+
+], << 'END' #----------------------------------------------------------
+
+Parabola: Focussing to infinity
+  From focus to locus:      -1/4*$i+$x+$i*$x**2
+  Vertical of same length:  $i*sqrt(1/16+1/2*$x**2+$x**4)
+  Tangent vector to locus:  1+2*$i*$x
+  Compare angles via dot:   1/2*$x-2*sqrt(1/16+1/2*$x**2+$x**4)*$x+2*$x**3
+  Focusses to infinity
+
+END
+);          #----------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# Parabola: Distance from focus to locus to directrix
+#______________________________________________________________________
+
+   {my ($a, $b, $A, $B, $x, $y, $R, $f, $i, $o) = symbols(qw(a b A B x y R f i 1));
+
+    &$t(4,  [ #--------------------------------------------------------
+
+"Parabola:  Distance from focus to locus to directrix\n",
+"  From focus to locus:            ",      $a = $x + $i * $x**2 - $i/4,
+"  From focus to locus squared:    ",      $A = $a^$a,
+"  From locus to directrix squared:",      $B = ($x**2+'1/4')**2, 
+
+($A == $B ? "  Equal lengths\n" : "  UNEQUAL LENGTHS\n"),
+
+], << 'END' #----------------------------------------------------------
+
+Parabola:  Distance from focus to locus to directrix
+  From focus to locus:              -1/4*$i+$x+$i*$x**2
+  From focus to locus squared:      1/16+1/2*$x**2+$x**4
+  From locus to directrix squared:  1/16+1/2*$x**2+$x**4
+  Equal lengths
+
+END
+);          #----------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# Hyperbola: Constant difference between distances from focii to locus.
+#______________________________________________________________________
+
+   {my ($a, $b, $A, $B, $f1, $f2, $x, $y, $R, $f, $i, $o) = symbols(qw(a b A B f1 f2 x y R f i 1));
+
+    &$t(5,  [ #--------------------------------------------------------
+
+"Hyperbola:  Constant difference between distances from focii to locus of y=1/x\n",
+"  Assume by symmetry the focii are on\n",
+"    the line y=x:                    ",   $f1 = $x + $i * $x,
+"    and equidistant from the origin: ",   $f2 = -$f1,
+"\n  Choose a convenient point on y=1/x:", $a = $o+$i,
+"    and another point:               ",   $b = $y+$i/$y,
+"\n  Difference in distances from focii\n",
+"    From first point:                ",   $A = abs($a - $f2) - abs($a - $f1),  
+"    From second point:               ",   $B = abs($b - $f2) + abs($b - $f1),
+"\n  Assuming the difference is constant,\n",
+"    and solving for x, we get:       x=", ($A eq $B)->solve(qw(x)),                        
+"\n  Which is indeed constant, as was to be demonstrated\n",                                                
+
+], << 'END' #----------------------------------------------------------
+
+Hyperbola:  Constant difference between distances from focii to locus of y=1/x
+  Assume by symmetry the focii are on
+    the line y=x:                       $x+$i*$x
+    and equidistant from the origin:   -$x-$i*$x
+
+  Choose a convenient point on y=1/x:  1+$i
+    and another point:                 $y+$i/$y
+
+  Difference in distances from focii
+    From first point:                  sqrt(2+4*$x+2*$x**2)
+                                      -sqrt(2-4*$x+2*$x**2)
+
+    From second point:
+      sqrt(2*$x**2*$y**2+2*$x*$y+2*$x*$y**3+1+$y**4)/$y
+     +sqrt(2*$x**2*$y**2-2*$x*$y-2*$x*$y**3+1+$y**4)/$y
+
+  Assuming the difference is constant,
+    and solving for x, we get:       x=sqrt(2)
+
+  Which is indeed constant, as was to be demonstrated
+END
+);          #----------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# Return error count for this test suite
+#______________________________________________________________________
+
+  [$e, 'Conic Tests'];
+ }
+
+#______________________________________________________________________
 # Tests collected together.
 #______________________________________________________________________
 
 sub test()
  {my @e;
 # import('symbols', BigInt=>1);
-  push @e, generalTests();
+  push @e, testSM();
+  push @e, testGeneral();
+  push @e, testConics();
   push @e, testEllipse();
 
   my $n = 0;
@@ -2661,16 +2939,28 @@ use ExtUtils::MakeMaker;
 WriteMakefile
  (NAME		=> '$package',
   VERSION	=> '$symbols::VERSION',	
-  ABSTRACT=> 'Symbolic Manipulation in Perl',
+  ABSTRACT=> 'Symbolic Manipulation using Perl',
   AUTHOR 	=> 'PhilipRBrenan\@yahoo.com',
  );
+END
+
+#______________________________________________________________________
+# test.pl
+#______________________________________________________________________
+
+  writeFile("test.pl", <<'END');
+use Math::Algebra::Symbols;
+
+$x = symbols(qw(x));
+
+$x->test();
 END
 
 #______________________________________________________________________
 # Copy and edit source files.
 #______________________________________________________________________
 
-  for my $f([qw(symbols.pm Symbols.pm)], [qw(test.pl test.pl)])
+  for my $f([qw(symbols.pm Symbols.pm)], [qw(i/test.pl test.pl)])
    {my ($if, $of) = @$f;
     my ($i,  $o);
 
@@ -2690,7 +2980,7 @@ END
    }
 
 #______________________________________________________________________
-# Readme.
+# README
 #______________________________________________________________________
 
   writeFile("README", <<'END');
@@ -2701,18 +2991,21 @@ Copyright Philip R Brenan, 2004
 This package supplies a set of functions and operators to manipulate
 Perl expressions algebraically:
 
- use Math::Algebra::Symbols;
+ use Math::Algebra::Symbols hyper=>1;
 
- $x = symbols(qw(x));
+ ($n, $x, $y) = symbols(qw(n x y));
 
- $y = sin($x)**2 + cos($x)**2; 
- $z = ($x**8-1) / ($x-1);
+ $a = sin($x)**2 + cos($x)**2; 
+ $b = ($x**8-1) / ($x-1);
+ $c = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x));
+ $d = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
 
- print "y=$y\nz=$z\n";
+ print "$a\n$b\n$c\n$d\n";
 
- # y=1                                        
- # z=1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
-
+ # 1                                        
+ # 1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
+ # $n**4                                   
+ # 1  
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself. 
@@ -2733,6 +3026,23 @@ philiprbrenan@yahoo.com
 END
 
 #______________________________________________________________________
+# CHANGES
+#______________________________________________________________________
+
+  writeFile("CHANGES", <<'END');
+
+2004/03/13 Added change log on esteemed advice of Steffen Müller. Made
+yet another attempt to stop polynomialDivide() from producing an
+infinite series as a representation of a single term. Most of
+mathematics seems to erupt from the division of one polynomial by
+another.
+
+I am carefully studying SM's work. Started testSM() to see whether I can
+reproduce his results.
+
+END
+
+#______________________________________________________________________
 # Manifest.
 #______________________________________________________________________
 
@@ -2741,6 +3051,7 @@ Makefile.PL
 Symbols.pm
 test.pl
 README
+CHANGES
 MANIFEST
 END
 
@@ -2767,9 +3078,9 @@ unless (caller())
    {test() unless caller();
    }
   else 
-   {my @p = @ARGV;
-    if ($p[0] =~ /install/i)
-     {&install();
+   {for(;my $p = shift(@ARGV);)
+     {&install() if $p =~ /install/i;
+      &testSM()  if $p =~ /steffen|mueller/i;
      }
    }
  }
@@ -2792,17 +3103,21 @@ Math::Algebra::Symbols - Symbolic Algebra using Perl
 
 =head1 SYNOPSIS
 
- use Math::Algebra::Symbols;
+ use Math::Algebra::Symbols hyper=>1;
 
- $x = symbols(qw(x));
+ ($n, $x, $y) = symbols(qw(n x y));
 
- $y = sin($x)**2 + cos($x)**2; 
- $z = ($x**8-1) / ($x-1);
+ $a = sin($x)**2 + cos($x)**2; 
+ $b = ($x**8-1) / ($x-1);
+ $c = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x));
+ $d = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
 
- print "y=$y\nz=$z\n";
+ print "$a\n$b\n$c\n$d\n";
 
- # y=1                                        
- # z=1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
+ # 1                                        
+ # 1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
+ # $n**4                                   
+ # 1                                        
 
 =head1 DESCRIPTION
 
@@ -3228,10 +3543,20 @@ removes these variables, an error is reported via B<die()> if it does not.
  # exp($x)
 
 B<d()> differentiates the equation on the left hand side by the named
-variable. If no variable name is supplied, then the equation is scanned
-and if it only refers to one variable then that variable is used. The
-variable to be differentiated by may either be specified as a string or
-as a symbol refering to a single variable with the correct name.
+variable.
+
+The variable to be differentiated by may be explicitly specifed,
+either as a string or as single symbol; or it may be heuristically
+guessed as follows:
+
+=over
+
+If the equation to be differentiated refers to only one symbol, then
+that symbol is used. If several symbols are present in the equation, but
+only one of B<t>, B<x>, B<y>, B<z> is present, then that variable is
+used in honor of Newton, Leibnitz, Cauchy.
+
+=back
 
 =head2 Examples
 
@@ -3371,4 +3696,4 @@ B<modulus>, B<re>, B<unit> to the caller's namespace.
 Philip R Brenan at B<philiprbrenan@yahoo.com>
 
 =cut
-
+#:folding=indent:

@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile
  (NAME		=> 'Math::Algebra::Symbols',
-  VERSION	=> '1.02',	
-  ABSTRACT=> 'Symbolic Manipulation in Perl',
+  VERSION	=> '1.03',	
+  ABSTRACT=> 'Symbolic Manipulation using Perl',
   AUTHOR 	=> 'PhilipRBrenan@yahoo.com',
  );

@@ -2,5 +2,6 @@ Makefile.PL
 Symbols.pm
 test.pl
 README
+CHANGES
 MANIFEST
 META.yml                                 Module meta-data (added by MakeMaker)

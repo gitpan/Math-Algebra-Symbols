@@ -5,18 +5,21 @@ Copyright Philip R Brenan, 2004
 This package supplies a set of functions and operators to manipulate
 Perl expressions algebraically:
 
- use symbols;
+ use symbols hyper=>1;
 
- $x = symbols(qw(x));
+ ($n, $x, $y) = symbols(qw(n x y));
 
- $y = sin($x)**2 + cos($x)**2; 
- $z = ($x**8-1) / ($x-1);
+ $a = sin($x)**2 + cos($x)**2; 
+ $b = ($x**8-1) / ($x-1);
+ $c = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x));
+ $d = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
 
- print "y=$y\nz=$z\n";
+ print "$a\n$b\n$c\n$d\n";
 
- # y=1                                        
- # z=1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
-
+ # 1                                        
+ # 1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
+ # $n**4                                   
+ # 1  
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself. 
