@@ -23,3 +23,5 @@ ok(  1/sqrt(1+$x)                           == 1/sqrt(1+$x));
 ok(  1/sqrt(1+$x)**3                        == 1/(sqrt(1+$x)+sqrt(1+$x)*$x));
 ok(  sqrt($x+1)**3 / sqrt(1+$x)**3          == 1);
 
+exit(0);
+

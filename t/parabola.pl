@@ -27,3 +27,5 @@ no warnings qw(void);
 
 ' Equal lengths',  ok ($A  == $B, 'Distance from focus to locus equals distance from locus to directrix');
 
+exit(0);
+

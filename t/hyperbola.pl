@@ -24,4 +24,5 @@ no warnings qw(void);
 '    From second point:                 ',   $B = abs($b - $f2) + abs($b - $f1),
 '  Solve for difference in distances    ',   ok( (($A-$B) eq 'x') == sqrt(symbols('2')));
 
+exit(0);
 

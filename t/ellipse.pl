@@ -121,4 +121,5 @@ use Test::More tests => 5;
   
   ok($A == $B, "Angle of incidence equals angle of reflection via cross product with tangent");
  }
+exit(0);
 

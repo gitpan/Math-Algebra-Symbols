@@ -41,4 +41,5 @@ ok(  sech($x) ==     sec($i*$x));
 ok(  tanh($x) == -$i*tan($i*$x));
 ok(  coth($x) ==  $i*cot($i*$x));
 
+exit(0);
 

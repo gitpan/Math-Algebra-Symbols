@@ -14,4 +14,5 @@ ok(  sin($x)    ==  sin($x)->d->d->d->d);
 ok(  cos($x)    ==  cos($x)->d->d->d->d);
 ok(  exp($x)    ==  exp($x)->d->d->d->d);
 ok( (1/$x)->d   == -1/$x**2);
+exit(0);
 

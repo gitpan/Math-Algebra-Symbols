@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:     Math-Algebra-Symbols
-version:  $VERSION
+version:  1.09
 abstract: Symbolic Manipulation using Perl
 license:  perl
 distribution_type: module
