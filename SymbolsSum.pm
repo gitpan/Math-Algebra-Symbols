@@ -6,7 +6,7 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsSum;
-$VERSION = 1.05;
+$VERSION = 1.07;
 
 use Math::Algebra::SymbolsTerm;
 use IO::Handle;
@@ -199,7 +199,7 @@ sub multiply($$)
 
 # Sqrt  
       my $s = 0;
-         $s = $a{s} if $a{s} and $a{s}->{id} == $b{s}->{id}; # Equal sqrts  
+         $s = $a{s} if $a{s} and $b{s} and $a{s}->{id} == $b{s}->{id}; # Equal sqrts  
       $a->Sqrt(multiplyC($a{s}, $b{s}))     unless $s;
 
 # Divide
@@ -243,8 +243,9 @@ sub divide($$)
  {my ($A, $B) = @_;
 
   $B->{id} == $zero->{id} and croak "Cannot divide by zero";
-  return $zero if $A->{id} == $zero->{id};
-  return $A    if $B->{id} == $one->{id};
+  return $zero      if $A->{id} == $zero->{id};
+  return $A         if $B->{id} == $one->{id};
+  return $A->negate if $B->{id} == $mOne->{id};
 
 # Divide term by term
   my $a = $A->st; my $b = $B->st;
@@ -281,21 +282,65 @@ sub divide($$)
   sigma(@t);
  }
 
+#______________________________________________________________________
+# Make an integer
+#______________________________________________________________________
+
+sub makeInt($)
+ {sigma(term()->one->clone->c(shift())->z)
+ }
+
+#______________________________________________________________________
+# Substitute.
+#______________________________________________________________________
+
+sub sub($@)
+ {my $E = shift();
+  my @R = @_;
+  my $Z = $zero;
+
+# Each replacement
+  for(;@R > 0;)
+   {my $s = shift @R; # Replace this variable
+    my $w = shift @R; # With this expression
+
+    $s =~ /^[a-z]+$/i or croak "Can only substitute an expression for a variable, not $s";
+    $w->isSum;
+
+# Each expression
+    for my $t($E->t)
+     {my $n = $t->vp($s);
+      my %t = $t->split;
+      my $S = sigma($t{t}->vp($s, 0)->z);  # Remove substitution variable
+      $S = $S->multiply(($t{s}->sub(@_))->Sqrt) if defined($t{s}); 
+      $S = $S->divide   ($t{d}->sub(@_))        if defined($t{d}); 
+      $S = $S->multiply(($t{e}->sub(@_))->Exp)  if defined($t{e}); 
+      $S = $S->multiply(($t{l}->sub(@_))->Log)  if defined($t{l}); 
+      $S = $S->multiply($w->power(makeInt($n))) if $n;
+      $Z = $Z->add($S);
+     }
+   }
+# Result
+  $Z;
+ }
+
 #_ Sum __________________________________________________________________
-# Check whether one sum is equal to another.
-# Multiply out all divisors, then check for equality
+# Check whether one sum is equal to another after multiplying out all
+# divides and divisors.
 #________________________________________________________________________
 
-sub isEqual($$)
- {my ($A, $B) = @_;
+#sub isEqual($$)
+# {my ($A, $B) = @_;
+sub isEqual($)
+ {my ($C) = @_;
 
 # Until there are no more divides
   for(;;)
-   {return 1 if $A->{id} == $B->{id}; 
+   {my (%c, $D, $N); $N = 0;
 
 # Most frequent divisor 
-    my (%c, $D, $N); $N = 0;
-    for my $t($A->t, $B->t)
+#   for my $t($A->t, $B->t)
+    for my $t($C->t)
      {my $d = $t->Divide;
       next unless $d;
       my $s = $d->getSignature;
@@ -305,11 +350,36 @@ sub isEqual($$)
        }
      }
     last unless $N;
-    $A = $A->multiply($D);
-    $B = $B->multiply($D);
+#   $A = $A->multiply($D);
+#   $B = $B->multiply($D);
+    $C = $C->multiply($D);
    }
-  my $z = $A->{id} == $B->{id};
-  $z;
+
+# Until there are no more negative powers
+  for(;;)
+   {my %v;
+#   for my $t($A->t, $B->t)
+    for my $t($C->t)
+     {for my $v($t->v)
+       {my $p = $t->vp($v);
+        next unless $p < 0;
+        $p = -$p; 
+        $v{$v} = $p if !defined($v{$v}) or $v{$v} < $p;
+       }
+     }
+    last unless scalar(keys(%v));
+    my $m = term()->one->clone;
+    $m->vp($_, $v{$_}) for keys(%v);
+    my $M = sigma($m->z);
+#   $A = $A->multiply($M); 
+#   $B = $B->multiply($M);
+    $C = $C->multiply($M); 
+   }
+
+# Result
+# my $z = $A->{id} == $B->{id};
+# $z;
+  $C;
  }
 
 #_ Sum __________________________________________________________________
@@ -368,9 +438,11 @@ sub normalizeSqrts($)
 # Check whether one sum is equal to another after multiplying out sqrts.
 #________________________________________________________________________
 
-sub isEqualSqrt($$)
- {my ($A, $B) = @_;
-  my $C = $A->subtract($B);  # Set to zero 
+#sub isEqualSqrt($$)
+# {my ($A, $B) = @_;
+#  my $C = $A->subtract($B);  # Set to zero 
+sub isEqualSqrt($)
+ {my ($C) = @_;
 
 #______________________________________________________________________
 # Each sqrt
@@ -462,8 +534,116 @@ sub isEqualSqrt($$)
 # Test result
 #________________________________________________________________________
 
-  $C->isEqual($zero);
+# $C->isEqual($zero);
+  $C;
  }
+
+#_ Sum __________________________________________________________________
+# Transform a sum assuming that it is equal to zero
+#________________________________________________________________________
+
+sub isZero($)
+ {my ($C) = @_;
+  $C->isEqualSqrt->isEqual;                  
+ }
+
+#_ Sum __________________________________________________________________
+# n: 2**n == N or undef 
+#________________________________________________________________________
+
+sub powerof2($)
+ {my ($N) = @_;
+  my $n   = 0;
+  return undef unless $N > 0;
+  for (;;)
+   {return $n    if     $N     == 1;        
+    return undef unless $N % 2 == 0;
+    ++$n;  $N /= 2;
+   }
+ }
+
+#_ Sum __________________________________________________________________
+# Solve an equation known to be equal to zero for a specified variable. 
+#________________________________________________________________________
+
+sub solve($$)
+ {my ($A, @x) = @_;
+  croak 'Need variable to solve for' unless scalar(@x) > 0;
+  my $x = $x[0];
+  my %x; $x{$_} = 1 for @x;
+  
+  $B = $A->isZero;  # Eliminate sqrts and negative powers
+
+# Strike all terms with free variables other than x: i.e. not and not one of the named constants
+  my @t = ();
+  for my $t($B->t)
+   {my @v = $t->v;
+    push @t, $t;
+    for my $v($t->v)
+     {next if exists($x{$v});
+      pop @t;
+      last;
+     } 
+   }
+  my $C = sigma(@t);
+                                                                
+# Find highest and lowest power of x
+  my $n = 0; my $N;
+  for my $t($C->t)
+   {my $p = $t->vp($x);
+    $n = $p if $p > $n;
+    $N = $p if !defined($N) or $p < $N;
+   }
+  my $D  = $C;
+     $D  = $D->multiply(sigma(term()->one->clone->vp($x, -$N)->z)) if $N;
+     $n -= $N if $N;
+                                                                
+# Find number of terms in x
+  my $c = 0; 
+  for my $t($D->t)
+   {++$c if $t->vp($x) > 0;
+   }
+  
+  $n == 0             and croak "Equation not dependant on $x, so cannot solve for $x";
+  $n  > 4 and $c > 1  and croak "Unable to solve polynomial or power $n > 4 in $x (Galois)";
+ ($n  > 2 and $c > 1) and die   "Need solver for polynomial of degree $n in $x";
+
+# Solve linear equation
+  if ($n == 1 or $c == 1)
+   {my (@c, @v);
+    for my $t($D->t)
+     {push(@c, $t), next if $t->vp($x) == 0; # Constants
+      push @v, $t;                           # Powers of x 
+     }
+    my $d = sigma(@v)->multiply(sigma(term()->one->clone->vp($x, -$n)->negate->z));
+       $D = sigma(@c)->divide($d);
+
+    return $D if $n == 1;
+
+    my $p = powerof2($n);
+    $p or croak "Fractional power 1/$n of $x unconstructable by sqrt";
+       $D = $D->Sqrt for(1..$p);
+    return $D;
+   }
+
+# Solve quadratic equation
+  if ($n == 2)
+   {my @c = ($one, $one, $one);
+    $c[$_->vp($x)] = $_ for $D->t;
+    $_ = sigma($_->clone->vp($x, 0)->z) for (@c);
+    my ($c, $b, $a) = @c;
+    return 
+     [ (-$b->add     (($b->power($two)->subtract($four->multiply($a)->multiply($c)))->Sqrt))->divide($two->multiply($a)),
+       (-$b->subtract(($b->power($two)->subtract($four->multiply($a)->multiply($c)))->Sqrt))->divide($two->multiply($a))
+     ] 
+   }
+
+# Check that it works
+
+# my $yy = $e->sub($x=>$xx);
+# $yy == 0 or die "Proposed solution \$$x=$xx does not zero equation $e";
+# $xx; 
+ }                   
 
 #_ Sum __________________________________________________________________
 # Power
@@ -962,8 +1142,8 @@ sub print($)
   $s =~ s/([\+\-])(\$[a-zA-Z]+)\*\*\-1(?!\d)/1\/$1/g;        # change: +-$y**-1 to +-1/$y
   $s =~ s/([\+\-])(\$[a-zA-Z]+)\*\*\-(\d+)/${1}1\/$2**$3/g;  # change: +-$y**-n to +-1/$y**n
   $s = 0 if $s eq '';
-  $s;               
- }
+  $s;
+ }              
 
 #_ Sum __________________________________________________________________
 # Useful constants
@@ -972,6 +1152,7 @@ sub print($)
 $zero  = sigma(term('0'));    sub zero()  {$zero}
 $one   = sigma(term('1'));    sub one()   {$one}
 $two   = sigma(term('2'));    sub two()   {$two}
+$four  = sigma(term('4'));    sub four()  {$four}
 $mOne  = sigma(term('-1'));   sub mOne()  {$mOne}
 $i     = sigma(term('i'));    sub i()     {$i}
 $mI    = sigma(term('-i'));   sub mI()    {$mI}
@@ -1154,6 +1335,7 @@ use overload
  '/'     =>\&divide3,
  '**'    =>\&power3,
  '=='    =>\&equals3,
+ 'eq'    =>\&solve3, 
  '<=>'   =>\&tequals3,
  'sqrt'  =>\&sqrt3,
  'exp'   =>\&exp3,
@@ -1241,10 +1423,16 @@ sub equals3
  {my ($a, $b) = @_;
   $b = newFromString("$b") unless ref($b) eq __PACKAGE__;
   $a->{z} and $b->{z} or die "Equals using unfinalized sums";
+
   return 1 if $a->{id} == $b->{id}; # Fast equals
-  return 1 if $a->isEqual($b);      # Equals after equation solving 
-  return 1 if $a->isEqualSqrt($b);  # Equals after sqrts multiplied out
+
+  my $c = $a->subtract($b);
+  return 1 if $c->isZero()->{id} == $zero->{id};
   return 0;
+
+# return 1 if $a->isEqual($b);      # Equals after equation solving 
+# return 1 if $a->isEqualSqrt($b);  # Equals after sqrts multiplied out
+# return 0;
  }
 
 #_ Sum __________________________________________________________________
@@ -1263,14 +1451,26 @@ sub tequals3
   print "\n" if   $written %  16 == 0;
   STDOUT->flush;
 
-  $b = newFromString("$b") unless ref($b) eq __PACKAGE__;
-  $a->{z} and $b->{z} or die "Equals using unfinalized sums";
+  return 1 if equals3($a, $b); 
+# $b = newFromString("$b") unless ref($b) eq __PACKAGE__;
+# $a->{z} and $b->{z} or die "Equals using unfinalized sums";
 
-  return 1 if $a->{id} == $b->{id}; # Fast equals
-  return 1 if $a->isEqual($b);      # Equals after equation solving 
-  return 1 if $a->isEqualSqrt($b);  # Equals after sqrts multiplied out
+# return 1 if $a->{id} == $b->{id}; # Fast equals
+# return 1 if $a->isEqual($b);      # Equals after equation solving 
+# return 1 if $a->isEqualSqrt($b);  # Equals after sqrts multiplied out
 
   die "\nDied in ". (caller())[0] ." at ". (caller())[1]. " line ". (caller())[2]. "\n";
+ }
+
+#_ Sum __________________________________________________________________
+# Solve operator.
+#________________________________________________________________________
+
+sub solve3
+ {my ($a, $b) = @_;
+  $a->{z} or die "Solve using unfinalized sum";
+  $b =~ /^[a-z]+$/i or croak "Bad variable $b to solve for";
+  solve($a, $b);
  }
 
 #_ Sum __________________________________________________________________
