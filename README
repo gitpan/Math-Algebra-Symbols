@@ -26,7 +26,7 @@ Math::Algebra::Symbols
     This is alpha code. It is written in pure Perl. It uses the standard
     Perl install mechanism or the ActiveState PPM Installer.
 
-    For a standard Perl install: download Math-Algebra-Symbols-1.11.tar.gz,
+    For a standard Perl install: download Math-Algebra-Symbols-1.12.tar.gz,
     from CPAN: http://cpan.uwinnipeg.ca/dist/Math-Algebra-Symbols or from
     SourceForge: https://sourceforge.net/projects/algeops/, untar and:
 
