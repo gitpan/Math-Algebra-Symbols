@@ -11,6 +11,11 @@
 <!-- INDEX BEGIN -->
 <!-- INDEX END -->
 
+<p>2004/06/01 1.16 Following excellent suggestions from Mike Schilli detect
+constants with decimal places and convert them to rational fractions,
+thus 1.2 becomes 12/10. The rationale: using fractions avoids loss of
+precision, if you only need approximate numerical results, there is no
+need for symbolic manipulations.</p>
 <p>2004/05/28 1.15 Minor changes to documentation.</p>
 <p>2004/05/27 1.14 Admiring new CPAN Layout: diff+grep. Updated META.yml
 requires/recommends to match MANIFEST.  Removed use of Hash::Util

@@ -10,7 +10,7 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsTerm;
-$VERSION = 1.15;
+$VERSION = 1.16;
 
 use Carp;
 use Math::BigInt;  
@@ -62,8 +62,17 @@ sub new
 sub newFromString($)
  {my ($a) = @_;
   return $zero unless $a;
+  my $A = $a; 
 
-  if ($a=~ /^\s*([+-])?(\d+)?(?:\/(\d+))?(i)?(?:\*)?(.*)$/)
+  for(;$A =~ /(\d+)\.(\d+)/;)
+   {my $i = $1;
+    my $j = $2;
+    my $l = '0' x length($j);
+#   carp "Replacing $i.$j with $i$j\/1$l in $A";
+    $A =~ s/$i\.$j/$i$j\/1$l/;
+   }
+
+  if  ($A  =~ /^\s*([+-])?(\d+)?(?:\/(\d+))?(i)?(?:\*)?(.*)$/)
    {my $c  =  '';
        $c  =  '-'.$c if $1 and $1 eq '-';
        $c .=  $2     if $2;
@@ -71,9 +80,9 @@ sub newFromString($)
        $c  = '-1'    if $c eq '-';   
     my $d  =  '';
        $d  =  $3     if $3;
-       $d  =  1      if $d eq '';
-    my $i =    0;
-       $i =    1     if $4;
+       $d  =   1     if $d eq '';
+    my $i  =   0;
+       $i  =   1     if $4;
 
     my $z = new()->c($c)->d($d)->i($i);
 
@@ -84,7 +93,8 @@ sub newFromString($)
       $z->{v}{$1} = 1  unless defined($2);
      }
 
-    croak "Cannot parse: $a" if $a eq $b;
+    croak "Cannot parse: $a" if $A eq $b;
+    croak "Cannot parse: $b in $a" if $b;
     return $z->z;
    }
   croak "Unable to parse $a";

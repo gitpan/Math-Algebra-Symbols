@@ -1,4 +1,5 @@
 
+Allow substitution and solution for simple expressions like miles/gallon.
 Recognize sin, cos, sinh, cosh etc. in expressions involving exp.
 Sigma,Product
 Taylor series

@@ -11,6 +11,7 @@ Symbols.pod
 SymbolsSum.pm
 SymbolsTerm.pm
 TODO   
+t/bugs.t
 t/complex.t
 t/cos.t
 t/differentiation.t
