@@ -1,4 +1,4 @@
-#!perl -W
+#!perl -w
 #______________________________________________________________________
 # Symbolic algebra.
 # PhilipRBrenan@yahoo.com, 2004.
@@ -19,6 +19,7 @@ init();
 &test(1,  [ #----------------------------------------------------------
 
 "Algebraic operations:\n\n", 
+  sin($x)**2 + cos($x)**2,           # Pythagoras 
   $x**8 - 1,                         # Symbolic multiplication
  ($x**8 - 1) /  ($x**4+1),           # Polynomial division
  ($x**8 - 1) /  ($x-1),                 
@@ -29,6 +30,7 @@ init();
 ], << 'END' #----------------------------------------------------------
 
 Algebraic operations:
+  1
   -1+$x**8
   -1+$x**4
   1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
@@ -64,13 +66,14 @@ init();
 ], << 'END' #----------------------------------------------------------
 
 Ellipse:
-  Locus:          y=sqrt($R**2+$R**-2*$x**2*$f**2-$f**2-$x**2)
-  At x=0:         y=sqrt($R**2-$f**2)
+  Locus:          y=sqrt($R**4-$R**2*$f**2-$R**2*$x**2+$f**2*$x**2)/$R
+  At x=0:         y=sqrt($R**4-$R**2*$f**2)/$R
   At x=1 f=1 R=2: y=3/2
   at x=R:         y=0
 
 Focus trip: distance from focus to locus to other focus =
-  sqrt($R**2+$R**-2*$x**2*$f**2-2*$x*$f)+sqrt($R**2+$R**-2*$x**2*$f**2+2*$x*$f)
+     sqrt($R**4-2*$R**2*$f*$x+$f**2*$x**2)/$R
+    +sqrt($R**4+2*$R**2*$f*$x+$f**2*$x**2)/$R
   Equals 2R
 END
 );          #----------------------------------------------------------
@@ -151,18 +154,19 @@ init();
 
 Hyperbola:  Constant difference between distances from focii to locus of y=1/x
   Assume by symmetry the focii are on
-    the line y=x:                      $x+$i*$x
+    the line y=x:                       $x+$i*$x
     and equidistant from the origin:   -$x-$i*$x
 
   Choose a convenient point on y=1/x:  1+$i
     and another point:                 $y+$i/$y
 
   Difference in distances from focii
-    From first point:       sqrt(2+4*$x+2*$x**2)
-                           -sqrt(2-4*$x+2*$x**2)
+    From first point:                  sqrt(2+4*$x+2*$x**2)
+                                      -sqrt(2-4*$x+2*$x**2)
 
-    From second point:      sqrt(2*$x**2+2/$y*$x+2*$y*$x+$y**-2+$y**2)
-                           +sqrt(2*$x**2-2/$y*$x-2*$y*$x+$y**-2+$y**2)
+    From second point:
+      sqrt(2*$x**2*$y**2+2*$x*$y+2*$x*$y**3+1+$y**4)/$y
+     +sqrt(2*$x**2*$y**2-2*$x*$y-2*$x*$y**3+1+$y**4)/$y
 
   Assuming the difference is constant,
     and solving for x, we get:       x=sqrt(2)

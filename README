@@ -1,12 +1,36 @@
-Math::Algebra::Symbols - Symbolic Manipulation in Perl
+Math::Algebra::Symbols - Symbolic Algebra using Perl.
+
+Copyright Philip R Brenan, 2004
 
 This package supplies a set of functions and operators to manipulate
-operator expressions algebraically. These expressions are constructed
-using the familiar Perl syntax.
+Perl expressions algebraically:
+
+ use symbols;
+
+ $x = symbols(qw(x));
+
+ $y = sin($x)**2 + cos($x)**2; 
+ $z = ($x**8-1) / ($x-1);
+
+ print "y=$y\nz=$z\n";
+
+ # y=1                                        
+ # z=1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
+
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself. 
 
-This is alpha code.
+This is alpha code. It is written in pure Perl. It uses the standard
+Perl install mechanism. Documentation and Examples in pod at end of
+module.
 
-For bug reports or suggestions send email to philiprbrenan@yahoo.com
+I believe that we should try to capture all known Mathematics
+symbolically in Perl. Indeed, can you say that you know any Mathematics
+at all if you cannot explain it in Perl?
+
+Help with this project would be appreciated.
+
+For bug reports or suggestions please send email to:
+philiprbrenan@yahoo.com
+
