@@ -1,4 +1,4 @@
-#!perl -W
+#!perl -w
 #______________________________________________________________________
 # Symbolic algebra.
 # Perl License.
@@ -11,7 +11,7 @@ use strict;
 use Carp;
 use Math::BigInt;
 
-$symbols::VERSION = '1.03';
+$symbols::VERSION = '1.04';
 
 #______________________________________________________________________
 # Overload.
@@ -405,7 +405,9 @@ sub getVE($);
 sub getVE($)
  {my %v;
   for my $t(@{$_[0]}) 
-   {$v{$_} = 1 for(keys(%{$t->{v}}));
+   {if (defined($t->{v}))
+     {$v{$_} = 1 for(keys(%{$t->{v}}));
+     }
     for my $s(qw(sqrt divide exp log))
      {%v = (%v, %{getVE($t->{$s})}) if exists($t->{$s});
      }
@@ -1033,7 +1035,7 @@ sub multiplyOutDivides($$)
 #______________________________________________________________________
 
 sub divide($$)
- {my ($A, $B) = @_;
+ {my ($A, $B) = (new($_[0]), new($_[1]));
 
   removeCommonCD    ($A, $B); # Common coefficients and divisors
   removeCommonI     ($A, $B); # Common i                          
@@ -1090,6 +1092,22 @@ sub power($$)
  {my ($e, $p) = @_;
   my $r = new($e);
 
+# Is the power a constant?
+
+  L: for(;;)
+   {last unless ref($p) eq ref(bless {});
+    last unless scalar(@$p) == 1;
+    for my $f(qw(sqrt divide exp log))
+     {last L if defined($$p[0]->{$f});
+     }
+    last if defined($$p[0]->{v}) and scalar(keys(%{$$p[0]->{v}}));
+    my ($C, $I, $D) = get($$p[0]);
+    last unless $I == 0; 
+    last unless $D == 1;
+    $p = $C;
+    last;
+   }
+
 # By a constant:  use successive squares to construct desired power
 
   if (!ref($p) or ref($p) eq 'Math::BigInt')
@@ -1122,8 +1140,14 @@ sub power($$)
 #______________________________________________________________________
 
 sub power3
- {my ($a, $b) = @_;
-  power($a, $b);
+ {my ($a, $b, $c) = @_;
+  my $d = $b;
+     $d = new($d) unless ref($d) eq ref bless {};
+  my $r;
+     $r = power($d, $a) if     $c;
+     $r = power($a, $d) unless $c;
+  $r;
+# power($a, $b);
  }
 
 #______________________________________________________________________
@@ -1472,6 +1496,7 @@ sub simplifyExp($)
 #______________________________________________________________________
 
   return if scalar(@$e) != 1;
+  return if defined($$e[0]->{v});
   my ($ec, $ei, $ed, $es, $eD, $ee, $el) = get($$e[0]);
   return if defined($es) or defined($eD) or defined($ee);
 
@@ -1500,6 +1525,7 @@ sub simplifyLog($)
 
   my ($c, $i, $d, $s, $D, $e, $l)        = get($t);
   return if !defined($l) or scalar(@$l) != 1;
+  return if defined($$l[0]->{v});
 
 #______________________________________________________________________
 # Simple case: log(1): set term to zero
@@ -1701,11 +1727,11 @@ sub sub($@)
 
 sub d($;$);
 sub d($;$)
- {my $c = $_[0]; # Differentiate this expression 
-  my $b = $_[1]; # With this variable
+ {my $c = new($_[0]); # Differentiate this expression 
+  my $b =     $_[1];  # With this variable
 
 #______________________________________________________________________
-# Get differentrix. Assume 'x' or 't' if appropriate.
+# Get differentrix. Assume 'x', 'y', 'z' or 't' if appropriate.
 #______________________________________________________________________
 
   if (defined($b) and !ref $b)
@@ -1714,11 +1740,14 @@ sub d($;$)
   else
    {my %b = %{getVE($b)};
        %b = %{getVE($c)} unless scalar(keys(%b));
-    $b = 'x'     if scalar(keys(%b)) == 0;
-    $b = (%b)[0] if scalar(keys(%b)) == 1;
-    $b = 'x'     if scalar(keys(%b)) > 1 and exists($b{x}) and !exists($b{t});
-    $b = 't'     if scalar(keys(%b)) > 1 and exists($b{t}) and !exists($b{x});
-    defined($b) or 
+    my $i = 0;
+    ++$i, $b = 'x'     if scalar(keys(%b)) == 0; # Constant expression anyway
+    ++$i, $b = (%b)[0] if scalar(keys(%b)) == 1;
+    ++$i, $b = 't'     if scalar(keys(%b))  > 1 and defined($b{t});
+    ++$i, $b = 'x'     if scalar(keys(%b))  > 1 and defined($b{x});
+    ++$i, $b = 'y'     if scalar(keys(%b))  > 1 and defined($b{y});
+    ++$i, $b = 'z'     if scalar(keys(%b))  > 1 and defined($b{z});
+    defined($b) and $i  == 1 or 
       croak "Please specify a single variable to differentiate by";
    }
 
@@ -2626,7 +2655,7 @@ sub checkTest($$$)
    }
   $l =~ s/\=\ \ /\=/g;
 
-  print "\nTest $t\n$l\nTest ";
+  print "\n", substr("Test $t".'-'x80, 0, 79)."\n$l\nTest ";
 
 # Remove spaces and compare results - error location would be helpful        
 
@@ -2638,6 +2667,18 @@ sub checkTest($$$)
 
   print("$t: Fail:\n\n$b\n"), ++$e unless $l eq $c;
   print "$t: OK\n"                 if     $l eq $c;
+
+# Approximate location of error
+
+  unless ($l eq $c)
+   {for(my $i = 0; $i < length($l); ++$i)
+     {if (substr($l, $i, 1) ne substr($c, $i, 1))
+       {print "\n\nERROR:\n". substr($l, 0, $i). "<<ERROR>>". substr($l, $i), "\n\n";
+        last;
+       }
+     } 
+   }
+
   $e;
  }
 
@@ -2650,6 +2691,134 @@ sub testSM
   my $t = sub {$e += checkTest($_[0],$_[1],$_[2])};
 
 #______________________________________________________________________
+# SM: Test 01
+#______________________________________________________________________
+
+   {my ($a, $b, $n, $x) = symbols(qw(a b 10 x));
+    &$t('SM01',  [ #---------------------------------------------------
+"Differentiate 10**(x**2)) and check for eigenvalue:\n", 
+"  A = t**($x**2)      = ", $a = $n**($x**2),             
+"  B = (dA/dx)         = ", $b = $a->d, 
+"  B/A                 = ", $b/$a, 
+"  Should be equal to:   2*$x*log(10) ? ", $b/$a == 2*$x*log($n) ? 'True' : 'FALSE', "\n", 
+
+], << 'END' #----------------------------------------------------------
+
+Differentiate 10**(x**2)) and check for eigenvalue:
+  A = t**($x**2)      = exp(log(10)*$x**2)
+  B = (dA/dx)         = 2*exp(log(10)*$x**2)*log(10)*$x
+  B/A                 = 2*log(10)*$x
+  Should be equal to:   2*$x*log(10) ? True
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# SM: Test 02
+#______________________________________________________________________
+
+   {my ($a, $b, $c, $x) = symbols(qw(a b c x));
+    &$t('SM02',  [ #---------------------------------------------------
+"Differentiate (x+c)**2/(x+c)\n", 
+"  A =           ", $a = ($x+$c)**2/($x+$c),             
+"  B = (dA/dx) = ", $b = $a->d, 
+"  Should be equal to: 1 ? ", $b == 1 ? 'True' : 'FALSE', "\n", 
+
+], << 'END' #----------------------------------------------------------
+
+Differentiate (x+c)**2/(x+c)
+  A =           $c+$x
+  B = (dA/dx) = 1
+  Should be equal to: 1 ? True
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# SM: Test 03
+#______________________________________________________________________
+
+   {my ($a, $b, $x) = symbols(qw(a b x));
+    &$t('SM03',  [ #---------------------------------------------------
+"Differentiate log(x*x)\n", 
+"  A =           ", $a = log($x*$x),             
+"  B = (dA/dx) = ", $b = $a->d, 
+"  Should be equal to: 2/$x ? ", $b == 2/$x ? 'True' : 'FALSE', "\n", 
+
+], << 'END' #----------------------------------------------------------
+Differentiate log(x*x)
+  A =           log($x**2)
+  B = (dA/dx) = 2/$x
+  Should be equal to: 2/$x ? True
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# SM: Test 04
+#______________________________________________________________________
+
+   {my ($a, $b, $x) = symbols(qw(a b x));
+    &$t('SM04',  [ #---------------------------------------------------
+"Differentiate exp(2*$x) 20 times and check for eigenvalue\n", 
+"  A =           ", $a = exp(2*$x),             
+"  B = (dA/dx) = ", eval ('$b = $a; $b = $b->d for(1..20)'), $b, 
+"  B/A         = ", $b/$a, 
+"  Should be equal to: 1048576 ? ", $b/$a == 1048576 ? 'True' : 'FALSE', "\n", 
+
+], << 'END' #----------------------------------------------------------
+Differentiate exp(2*$x) 20 times and check for eigenvalue
+  A =           exp(2*$x)
+  B = (dA/dx) = 1048576*exp(2*$x)
+  B/A         = 1048576
+  Should be equal to: 1048576 ? True
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# SM: Test 05
+#______________________________________________________________________
+
+   {my ($a, $b, $x) = symbols(qw(a b x));
+    &$t('SM05',  [ #---------------------------------------------------
+"Differentiate exp($x**2) and check for eigenvalue\n", 
+"  A =           ", $a = exp(2*$x),             
+"  B = (dA/dx) = ", $b = $a->d, 
+"  B/A         = ", $b/$a, 
+"  Should be equal to: 2 ? ", $b/$a == 2 ? 'True' : 'FALSE', "\n", 
+
+], << 'END' #----------------------------------------------------------
+Differentiate exp($x**2) and check for eigenvalue
+  A =           exp(2*$x)
+  B = (dA/dx) = 2*exp(2*$x)
+  B/A         = 2
+  Should be equal to: 2 ? True
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# SM: Test 06
+#______________________________________________________________________
+
+   {my ($a, $b, $x) = symbols(qw(a b x));
+    &$t('SM06',  [ #---------------------------------------------------
+"Differentiate x/x+x*x+x+x+x-x\n", 
+"  A =           ", $a = $x/$x+$x*$x+$x+$x+$x-$x,             
+"  B = (dA/dx) = ", $b = $a->d, 
+"  Should be equal to: 2+2*$x ? ", $b == 2+2*$x ? 'True' : 'FALSE', "\n", 
+
+], << 'END' #----------------------------------------------------------
+Differentiate x/x+x*x+x+x+x-x
+  A =           1+2*$x+$x**2
+  B = (dA/dx) = 2+2*$x
+  Should be equal to: 2+2*$x ? True
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
 # SM: Test 07
 #______________________________________________________________________
 
@@ -2660,17 +2829,16 @@ sub testSM
 "  A = sin(nx)+cos(nx) = ", $a = sin($n*$x) + cos($n*$x), 
 "  B = (d/dx)**4 of A  = ", $b = $a->d->d->d->d, 
 "  B/A                 = ", $b/$a, 
-"  Should be equal to:   $n**4 ? ", $b/$a == $n**4 ? 'True' : 'FAlSE', "\n", 
+"  Should be equal to:   $n**4 ? ", $b/$a == $n**4 ? 'True' : 'FALSE', "\n", 
 
 ], << 'END' #----------------------------------------------------------
 
 Differentiate sin(nx)+cos(nx) 4 times and check for eigenvalue:
+  A = sin(nx)+cos(nx) = 1/2*$i*exp(-$i*$n*$x)-1/2*$i*exp( $i*$n*$x)
+                       +1/2*   exp($i*$n*$x) +1/2*   exp(-$i*$n*$x)
 
-  A = sin(nx)+cos(nx) = $i*exp(-$i*$n*$x)-$i*exp($ i*$n*$x)
-                          +exp( $i*$n*$x)+   exp(-$i*$n*$x)
-
-  B = (d/dx)**4 of A  = $i*exp(-$i*$n*$x)*$n**4-$i*exp( $i*$n*$x)*$n**4
-                          +exp( $i*$n*$x)*$n**4+   exp(-$i*$n*$x)*$n**4
+  B = (d/dx)**4 of A  = 1/2*$i*exp(-$i*$n*$x)*$n**4-1/2*$i*exp( $i*$n*$x)*$n**4
+                       +1/2*   exp( $i*$n*$x)*$n**4+1/2*   exp(-$i*$n*$x)*$n**4
 
   B/A                 = $n**4
   Should be equal to:   $n**4 ? True
@@ -2678,6 +2846,96 @@ Differentiate sin(nx)+cos(nx) 4 times and check for eigenvalue:
 END
 ); #-------------------------------------------------------------------
    }
+
+#______________________________________________________________________
+# SM: Test 08
+#______________________________________________________________________
+
+   {my ($a, $b, $x) = symbols(qw(a b x));
+    &$t('SM08',  [ #---------------------------------------------------
+"Differentiate sinh(2*x) four times and check for eigenvalue\n", 
+"  A =           ", $a = sinh(2*$x),             
+"  B = (dA/dx) = ", $b = $a->d->d->d->d, 
+"  B/A         = ", $b/$a, 
+"  Should be equal to: 16 ? ", $b/$a == 16 ? 'True' : 'FALSE', "\n", 
+
+], << 'END' #----------------------------------------------------------
+Differentiate sinh(2*x) four times and check for eigenvalue
+  A =           1/2*exp(2*$x)-1/2*exp(-2*$x)
+  B = (dA/dx) = 8*exp(2*$x)-8*exp(-2*$x)
+  B/A         = 16
+  Should be equal to: 16 ? True
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# SM: Test 09 - Fail need to recognize sin, cos, sinh etc.
+#______________________________________________________________________
+
+   {my ($a, $b, $x) = symbols(qw(a b x));
+    &$t('SM09',  [ #---------------------------------------------------
+"Differentiate tan(2*x) four times\n", 
+"  A =           ", $a = tan(2*$x),             
+"  B = (dA/dx) = ", $b = $a->d, 
+
+], << 'END' #----------------------------------------------------------
+Differentiate tan(2*x) four times 
+  A =           -$i*exp(4*$i*$x)+$i*exp(-2*$i*$x)/(exp(2*$i*$x)+exp(-2*$i*$x))+$i*exp(6*$i*$x)/(exp(2*$i*$x)+exp(-2*$i*$x))
+
+  B = (dA/dx) = 4*exp(4*$i*$x)-2+6/(exp(4*$i*$x)+2+exp(-4*$i*$x))+2*exp(4*$i*$x)/(exp(4*$i*$x)+2+exp(-4*$i*$x))+2*exp(-2*$i*$x)/(exp(2*$i*$x)+exp(-2*$i*$x))-2*exp(8*$i*$x)+6*exp(8*$i*$x)/(exp(4*$i*$x)+2+exp(-4*$i*$x))+2*exp(12*$i*$x)/(exp(4*$i*$x)+2+exp(-4*$i*$x))-6*exp(6*$i*$x)/(exp(2*$i*$x)+exp(-2*$i*$x))
+
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# SM: Test 10 
+#______________________________________________________________________
+
+   {my ($a, $b, $x) = symbols(qw(a b x));
+    &$t('SM10',  [ #---------------------------------------------------
+"Differentiate 2x+1\n", 
+"  A =           ", $a = 2*$x+1,             
+"  B = (dA/dx) = ", $b = $a->d, 
+"  Should be equal to: 2 ? ", $b == 2 ? 'True' : 'FALSE', "\n", 
+
+], << 'END' #----------------------------------------------------------
+Differentiate 2x+1
+  A =           1+2*$x
+  B = (dA/dx) = 2
+  Should be equal to: 2 ? True
+END
+); #-------------------------------------------------------------------
+   }
+
+#______________________________________________________________________
+# SM: Test 11
+#______________________________________________________________________
+
+   {my ($a, $b, $n, $x) = symbols(qw(a b 10 x));
+    &$t('SM11',  [ #---------------------------------------------------
+"Differentiate 10**(x**4)\n", 
+"  A =           ", $a = 10**($x**4),             
+"  B = (dA/dx) = ", $b = $a->d, 
+
+], << 'END' #----------------------------------------------------------
+Differentiate 10**(x**4)
+  A =           exp(log(10)*$x**4)
+  B = (dA/dx) = 4*exp(log(10)*$x**4)*log(10)*$x**3
+END
+); #-------------------------------------------------------------------
+   }
+#______________________________________________________________________
+# SM: Test 12 - no analog.
+# SM: Test 13 - no analog.
+# SM: Test 14 - need to revise electronic circuits to understand
+# SM: Test 15 - grad operator - no analog yet
+# SM: Test 16 - taylor series for a function                - add todo.
+# SM: Test 17 - taylor series for a function two dimensions - add todo.
+# SM: Test 18 - Matrix determinant                                     
+# SM: Test 19 - Unsure what this is doing                              
+#______________________________________________________________________
 
 #______________________________________________________________________
 # Return error count for this test suite
@@ -2928,6 +3186,7 @@ sub install()
   print `mkdir i` unless -e 'i';
   print `rm -vr i/*`;
   print `pod2html.bat --infile=symbols.pm --outfile=symbols.html`;
+  print `pod2html.bat --infile=symbols.pm --outfile=i/symbols.html`;
 
 #______________________________________________________________________
 # Make file.
@@ -3026,10 +3285,31 @@ philiprbrenan@yahoo.com
 END
 
 #______________________________________________________________________
+# TODO
+#______________________________________________________________________
+
+  writeFile("TODO", <<'END');
+
+Recognize sin, cos, sinh, cosh etc. in expressions involving exp.
+Sigma,Product
+Taylor series
+Integrals
+Fourier
+Laplace
+Groups
+Sets
+Graphing using Tk.
+
+END
+
+#______________________________________________________________________
 # CHANGES
 #______________________________________________________________________
 
   writeFile("CHANGES", <<'END');
+
+2004/03/14 Fixed power() so that it recognizes constant powers. Added
+TODO List. Finished testSM(): new requirements in TODO.
 
 2004/03/13 Added change log on esteemed advice of Steffen Müller. Made
 yet another attempt to stop polynomialDivide() from producing an
@@ -3038,7 +3318,7 @@ mathematics seems to erupt from the division of one polynomial by
 another.
 
 I am carefully studying SM's work. Started testSM() to see whether I can
-reproduce his results.
+reproduce his results.  Have reached test11.
 
 END
 
@@ -3049,9 +3329,11 @@ END
   writeFile("MANIFEST", <<'END');
 Makefile.PL
 Symbols.pm
+symbols.html
 test.pl
 README
 CHANGES
+TODO   
 MANIFEST
 END
 
