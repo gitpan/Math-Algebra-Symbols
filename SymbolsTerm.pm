@@ -10,7 +10,7 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsTerm;
-$VERSION = 1.14;
+$VERSION = 1.15;
 
 use Carp;
 use Math::BigInt;  
@@ -1205,7 +1205,7 @@ Math::Algebra::Symbols - Symbolic Algebra using Perl
 
 =head1 SYNOPSIS
 
- use Maths::Algebra::Symbols hyper=>1;
+ use Math::Algebra::Symbols hyper=>1;
 
  ($n, $x, $y) = symbols(qw(n x y));
 
@@ -1234,7 +1234,7 @@ L</Methods>.  For examples, see: L</Examples>.
 
 Symbols are created with the exported B<symbols()> constructor routine:
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  my ($x, $y, $i, $o, $pi) = symbols(qw(x y i 1 pi));
 
@@ -1250,7 +1250,7 @@ The special symbol B<i> is recognized as the square root of B<-1>.
 The special symbol B<pi> is recognized as the smallest positive real
 that satisfies:
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($i, $pi) = symbols(qw(i pi));
 
@@ -1263,7 +1263,7 @@ that satisfies:
 If you wish to use a different name for the constructor routine, say
 B<S>:
 
- use Maths::Algebra::Symbols symbols=>'S';
+ use Math::Algebra::Symbols symbols=>'S';
 
  my ($x, $y, $i, $o) = S(qw(x y i 1));
 
@@ -1273,9 +1273,9 @@ B<S>:
 
 =head3 Constructing Expressions with Big Integers
 
-If you wish to use Maths::Algebra::Symbols constructed with big integers from L<Math::BigInt>:
+If you wish to use Math::Algebra::Symbols constructed with big integers from L<Math::BigInt>:
 
- use Maths::Algebra::Symbols BigInt=>1;
+ use Math::Algebra::Symbols BigInt=>1;
 
  my $z = symbols('1234567890987654321/1234567890987654321');
 
@@ -1292,7 +1292,7 @@ L</Symbols> can be combined with L</Operators> to create symbolic expressions:
 
 =head4 Arithmetic Operators: B<+> B<-> B<*> B</> B<**> 
             
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($x, $y) = symbols(qw(x y));
 
@@ -1307,7 +1307,7 @@ work courtesy of Perl Auto-Magical Operator Generation.
 
 =head4 Square root Operator: B<sqrt>       
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  $x = symbols(qw(x));
 
@@ -1319,7 +1319,7 @@ work courtesy of Perl Auto-Magical Operator Generation.
 
 =head4 Exponential Operator: B<exp>       
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  $x = symbols(qw(x));
 
@@ -1331,7 +1331,7 @@ work courtesy of Perl Auto-Magical Operator Generation.
 
 =head4 Logarithm Operator: B<log>       
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  $x = symbols(qw(x));
 
@@ -1343,7 +1343,7 @@ work courtesy of Perl Auto-Magical Operator Generation.
 
 =head4 Sine and Cosine Operators: B<sin> and B<cos>       
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  $x = symbols(qw(x));
 
@@ -1357,7 +1357,7 @@ work courtesy of Perl Auto-Magical Operator Generation.
 
 =head4 Relational operators: B<==>, B<!=> 
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($x, $y) = symbols(qw(x y));
 
@@ -1373,7 +1373,7 @@ result.
 
 =head4 Relational operator: B<eq> 
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($x, $v, $t) = symbols(qw(x v t));
 
@@ -1391,7 +1391,7 @@ function will be used to simplify and rearrange the equation.
 
 =head4 Complex operators: the B<dot> operator: B<^>       
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($a, $b, $i) = symbols(qw(a b i));
 
@@ -1409,7 +1409,7 @@ to which the vector dot product is applied.
 
 =head4 Complex operators: the B<cross> operator: B<x>       
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($x, $i) = symbols(qw(x i));
 
@@ -1429,7 +1429,7 @@ the expression correctly.
 
 =head4 Complex operators: the B<conjugate> operator: B<~>       
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($x, $y, $i) = symbols(qw(x y i));
 
@@ -1443,7 +1443,7 @@ The B<~> operator returns the complex conjugate of its right hand side.
 
 =head4 Complex operators: the B<modulus> operator: B<abs>       
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($x, $i) = symbols(qw(x i));
 
@@ -1457,7 +1457,7 @@ The B<abs> operator returns the modulus (length) of its right hand side.
 
 =head4 Complex operators: the B<unit> operator: B<!>       
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  $i = symbols(qw(i));
 
@@ -1486,7 +1486,7 @@ the user's namespace as described in L</EXPORT>.
 
 =head4 Trigonometric functions
 
- use Maths::Algebra::Symbols trig=>1;
+ use Math::Algebra::Symbols trig=>1;
 
  ($x, $y) = symbols(qw(x y));
 
@@ -1502,7 +1502,7 @@ as methods.
 
 =head4 Hyperbolic functions
 
- use Maths::Algebra::Symbols hyper=>1;
+ use Math::Algebra::Symbols hyper=>1;
 
  ($x, $y) = symbols(qw(x y));
 
@@ -1520,7 +1520,7 @@ as methods.
 
 =head4 Complex functions: B<re> and B<im>       
 
- use Maths::Algebra::Symbols complex=>1;
+ use Math::Algebra::Symbols complex=>1;
 
  ($x, $i) = symbols(qw(x i));
 
@@ -1537,7 +1537,7 @@ variables represent real numbers.
 
 =head4 Complex functions: B<dot> and B<cross>       
 
- use Maths::Algebra::Symbols complex=>1;
+ use Math::Algebra::Symbols complex=>1;
 
  $i = symbols(qw(i));
 
@@ -1553,7 +1553,7 @@ exports to the caller's name space, or as methods.
 
 =head4 Complex functions: B<conjugate>, B<modulus> and B<unit>       
 
- use Maths::Algebra::Symbols complex=>1;
+ use Math::Algebra::Symbols complex=>1;
 
  $i = symbols(qw(i));
 
@@ -1581,7 +1581,7 @@ overloading.
 
 =head4 Simplifying equations: B<sub()>
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
  
  ($x, $y) = symbols(qw(x y));
  
@@ -1612,7 +1612,7 @@ or similar will produce approximate results.
 
 =head4 Solving equations: B<solve()>
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($x, $v, $t) = symbols(qw(x v t));
 
@@ -1635,7 +1635,7 @@ removes these variables, an error is reported via B<die()> if it does not.
 
 =head4 Differentiation: B<d()>
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($x, $i) = S(qw(x i));
 
@@ -1661,7 +1661,7 @@ used in honor of Newton, Leibnitz, Cauchy.
 
 =head3 Example Expressions
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  ($a, $b, $x, $y, $i) = symbols(qw(a b x y i));
 
@@ -1697,7 +1697,7 @@ used in honor of Newton, Leibnitz, Cauchy.
 
 =head3 Example of Equation Solving: the focii of a hyperbola:
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
  ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
 
  print
@@ -1720,7 +1720,7 @@ is a hyperbola.
 
 =head3 Further Examples
 
- use Maths::Algebra::Symbols;
+ use Math::Algebra::Symbols;
 
  $x = symbols(qw(x));
 
@@ -1734,8 +1734,12 @@ examples of the capabilities of this package.  These tests may also be run as:
 
 =head1 EXPORT
 
- use Maths::Algebra::Symbols symbols=>'S', BigInt=>0, trig=>1 hyper=>1,
-   complex=>1;
+ use Math::Algebra::Symbols
+   symbols=>'S',
+   BigInt => 0,
+   trig   => 1,
+   hyper  => 1,
+   complex=> 1;
 
 =over
 
@@ -1859,8 +1863,9 @@ with Perl method lookup selecting the appropriate one as required.
 
 =head2 Math::Algebra::Symbols
 
-Packaging the user functionality separately in package B<Symbols> allows
-the internal functions to be conveniently hidden from user scripts.
+Packaging the user functionality alone and separately in package
+B<Symbols> allows the internal functions to be conveniently hidden from
+user scripts.
 
 
 =head1 AUTHOR

@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile
  (NAME		=> 'Math::Algebra::Symbols',
-  VERSION	=> '1.14',	
+  VERSION	=> '1.15',	
   ABSTRACT=> 'Symbolic Algebra using Perl',
   AUTHOR 	=> '\"Philip R Brenan\"<philiprbrenan@yahoo.com>',
   PREREQ_PM => 
