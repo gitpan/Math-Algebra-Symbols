@@ -108,5 +108,4 @@ ok(  tan($x)->d ==  sec($x)**2);
 ok(  cot($x)->d == -csc($x)**2);
 ok(  sec($x)->d ==  sec($x)*tan($x));
 ok(  csc($x)->d == -csc($x)*cot($x));
-exit(0);
 

@@ -17,5 +17,3 @@ use Test::More tests => 1;
     $d  = $c->im;
 ok( $d == $zero);
 
-exit(0);
-

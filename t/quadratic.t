@@ -21,5 +21,3 @@ print "x=$x\n";                   # Proposed solution
 
 ok( $x == (-$b+sqrt($b*$b-4*$a*$c))/(2*$a), 'Quadratic solution');
 
-exit(0);
-

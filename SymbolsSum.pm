@@ -6,7 +6,7 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsSum;
-$VERSION = 1.17;
+$VERSION = 1.18;
 
 use Math::Algebra::SymbolsTerm;
 use IO::Handle;
@@ -818,6 +818,190 @@ sub d($;$)
  }
 
 #_ Sum __________________________________________________________________
+# Simplify just before assignment.
+# There is no general simplification algorithm.  So try various methods
+# and see if any simplifications occur.  This is cheating really, because
+# the examples will represent these specific transformations as general
+# features which they are not.  On the other hand, Mathematics is full of
+# specifics so I suppose its not entirely unacceptable.
+# Simplification cannot be done after every operation as it is
+# inefficient, doing it as part of += ameliorates this inefficiency.    
+#________________________________________________________________________
+
+sub simplify($) 
+ {my ($x) = @_;
+  $x = polynomialDivision($x);
+  $x = eigenValue($x);
+ }
+
+#_ Sum __________________________________________________________________
+# Common factor: find the largest factor to one or more expressions
+#________________________________________________________________________
+
+sub commonFactor(@) 
+ {return undef unless scalar(@_);
+  return undef unless scalar(keys(%{$_[0]->{t}}));
+  my $p = (values(%{$_[0]->{t}}))[0];
+
+  my %v = %{$p->{v}};                     # Variables
+  my %s = $p->split;
+  my ($s, $d, $e, $l) = @s{qw(s d e l)};  # Sub expressions
+  my ($C, $D, $I) = ($p->c, $p->d, $p->i);
+
+  my @t;
+  for my $a(@_)
+   {for my $b($a->t)
+     {push @t, $b;
+     }
+   }
+
+  for my $t(@t)
+   {my %V = %v;
+    %v = ();
+    for my $v($t->v)
+     {next unless $V{$v};
+      my $p = $t->vp($v); 
+      $v{$v} = ($V{$v} < $p ? $V{$v} : $p);
+     }
+    my %S = $t->split;
+    my ($S, $D, $E, $L) = @S{qw(s d e l)};  # Sub expressions
+    $s = undef unless defined($s) and defined($S) and $S->id eq $s->id;
+    $d = undef unless defined($d) and defined($D) and $D->id eq $d->id;
+    $e = undef unless defined($e) and defined($E) and $E->id eq $e->id;
+    $l = undef unless defined($l) and defined($L) and $L->id eq $l->id;
+    $C = undef unless defined($C) and $C == $t->c;
+    $D = undef unless defined($D) and $D == $t->d;
+    $I = undef unless defined($I) and $I == $t->i;
+   }
+  my $r = term()->one->clone;
+  $r->c($C) if defined($C);
+  $r->d($D) if defined($D);
+  $r->i($I) if defined($I);
+  $r->vp($_, $v{$_}) for(keys(%v));
+  $r->Sqrt  ($s) if defined($s);
+  $r->Divide($d) if defined($d);
+  $r->Exp   ($e) if defined($e);
+  $r->Log   ($l) if defined($l);
+  sigma($r->z);
+ }
+
+#_ Sum __________________________________________________________________
+# Find term of polynomial of highest degree.
+#________________________________________________________________________
+
+sub polynomialTermOfHighestDegree($$) 
+ {my ($p, $v) = @_;     # Polynomial, variable
+  my $n = 0;            # Current highest degree  
+  my $t;                # Term with this degree 
+  for my $T($p->t)
+   {my $N = $T->vp($v);
+    if ($N > $n)
+     {$n = $N;
+      $t = $T;
+     }
+   }
+  ($n, $t);
+ }
+
+#_ Sum __________________________________________________________________
+# Polynomial divide - divide one polynomial (a) by another (b) in variable v
+#________________________________________________________________________
+
+sub polynomialDivide($$$) 
+ {my ($p, $q, $v) = @_;
+
+  my $r = zero()->clone()->z;
+  for(;;)
+   {my ($np, $mp) = $p->polynomialTermOfHighestDegree($v);
+    my ($nq, $mq) = $q->polynomialTermOfHighestDegree($v);
+    last unless $np >= $nq;
+    my $pq = sigma($mp->divide2($mq));
+    $r = $r->add($pq);
+    $p = $p->subtract($q->multiply($pq));
+   }
+  return $r if $p->isZero()->{id} == $zero->{id};
+  undef;
+ }
+
+#_ Sum __________________________________________________________________
+# Eigenvalue check
+#________________________________________________________________________
+
+sub eigenValue($) 
+ {my ($p) = @_;
+
+# Find divisors
+  my %d;
+  for my $t($p->t)
+   {my $d  = $t->Divide;
+    next unless defined($d);
+    $d{$d->id} = $d;
+   }
+
+# Consolidate numerator and denominator
+  my $P = $p   ->clone()->z; $P = $P->multiply($d{$_}) for(keys(%d));
+  my $Q = one()->clone()->z; $Q = $Q->multiply($d{$_}) for(keys(%d));
+
+# Check for P=nQ i.e. for eigenvalue
+  my $cP = $P->commonFactor; my $dP = $P->divide($cP);
+  my $cQ = $Q->commonFactor; my $dQ = $Q->divide($cQ);
+
+  return $cP->divide($cQ) if $dP->id == $dQ->id;
+  $p;
+ }
+
+#_ Sum __________________________________________________________________
+# Polynomial division.
+#________________________________________________________________________
+
+sub polynomialDivision($) 
+ {my ($p) = @_;
+
+# Find a plausible indeterminate
+  my %v;                # Possible indeterminates
+  my $v;                # Polynomial indeterminate
+  my %D;                # Divisors for each term
+
+# Each term
+  for my $t($p->t)
+   {my @v = $t->v;
+    $v{$_}{$t->vp($_)} = 1 for(@v);
+    my %V = $t->split;
+    my ($S, $D, $E, $L) = @V{qw(s d e l)};
+    return $p if defined($S) or defined($E) or defined($L);
+
+# Each divisor term
+    if (defined($D))
+     {for my $T($D->t)
+       {my @v = $T->v;
+        $v{$_}{$T->vp($_)} = 1 for(@v);
+        my %V = $T->split;
+        my ($S, $D, $E, $L) = @V{qw(s d e l)};
+        return $p if defined($S) or defined($D) or defined($E) or defined($L);
+       }
+      $D{$D->id} = $D;
+     }  
+   }
+
+# Consolidate numerator and denominator
+  my $P = $p   ->clone()->z; $P = $P->multiply($D{$_}) for(keys(%D));
+  my $Q = one()->clone()->z; $Q = $Q->multiply($D{$_}) for(keys(%D));
+
+# Pick a possible indeterminate
+  for(keys(%v))
+   {delete $v{$_} if scalar(keys(%{$v{$_}})) == 1;
+   }
+  return $p unless scalar(keys(%v)); 
+  $v = (keys(%v))[0];
+
+# Divide P by Q
+  my $r;
+     $r = $P->polynomialDivide($Q, $v); return $r                if defined($r);
+     $r = $Q->polynomialDivide($P, $v); return one()->divide($r) if defined($r);
+  $p;
+ }
+
+#_ Sum __________________________________________________________________
 # Sqrt
 #________________________________________________________________________
 
@@ -1030,7 +1214,7 @@ sub conjugate($)
 
 sub clone($) 
  {my ($t) = @_;
-  $t->{z} or die "Attempt to clone unfinalized expr";
+  $t->{z} or die "Attempt to clone unfinalized sum";
   my $c   = bless {%$t};
   $c->{t} = {%{$t->{t}}};
   delete $c->{z};
@@ -1040,7 +1224,8 @@ sub clone($)
  }
 
 #_ Sum __________________________________________________________________
-# Sign the term. Used to optimize add().  Fix the problem of adding different logs
+# Sign the term. Used to optimize add().
+# Fix the problem of adding different logs
 #________________________________________________________________________
 
 sub signature($) 
@@ -1142,6 +1327,7 @@ sub print($)
   $s =~ s/^1\*//g;                                           # remove: 1*  at start of expression      
   $s =~ s/^\-1\*/\-/g;                                       # change: -1* at start of expression to -
   $s =~ s/^0\+//g;                                           # change: 0+  at start of expression to 
+  $s =~ s/\+0$//;                                            # remove: +0  at end   of expression
   $s =~ s#\(\+0\+#\(#g;                                      # change: (+0+     to (
   $s =~ s/\(\+/\(/g;                                         # change: (+       to (
   $s =~ s/\(1\*/\(/g;                                        # change: (1*      to (
@@ -1369,6 +1555,7 @@ use overload
 
 sub add3
  {my ($a, $b) = @_;
+  return simplify($a) unless defined($b); # += : simplify()
   $b = newFromString("$b") unless ref($b) eq __PACKAGE__;
   $a->{z} and $b->{z} or die "Add using unfinalized sums";
   $a->add($b);
@@ -1608,367 +1795,6 @@ sub conjugate3
  }
 
 #_ Sum __________________________________________________________________
-# Tests
-#________________________________________________________________________
-
-sub test()
- {use warnings qw(all);
-  no warnings qw(void);
-# lockHashes();
-#goto L;
- ($a, $b, $c, $x, $y) = n(qw(1 2 3 x y));
-
-# Simple sums
-  n(0)                <=> $zero;
-  n(1)                <=> $one;
-
- ($a, $b) = n(qw(2 3));
-  $a                  <=> $two;
-  $b                  <=> 3;
-  $a+$a               <=> 4;                  
-  $a+$b               <=> 5; 
-  $a+$b+$a+$b         <=> 10;
-  $a+1                <=> 3;
-  $a+2                <=> 4;
-  $b-1                <=> 2;
-  $b-2                <=> 1;
-  $b-9                <=> -6;
-  $a/2                <=> $one;
-  $a/4                <=> '1/2';
-  $a*2/2              <=> $two;
-  $a*2/4              <=> $one;
-  $a**2               <=> 4; 
-  $a**10              <=> 1024;
-  sqrt($a**2)         <=> $a;
-  sqrt(n(-1))         <=> 'i';
-  sqrt(n(4))          <=> 2;
-  n('1/2') + '1/3' + '1/4' - '1/12' <=> 1;
-
- ($a, $b, $x, $y) = n(qw(1 2 x y));
-  sqrt(n('-1'))       <=> $i;
-  n('x')              <=> $x;
-  n('2*x**2')         <=> 2*$x**2;
-  $a+$a               <=> 2*$a;
-  $a+$a+$a            <=> 3*$a;
-  $a-$a               <=> $zero;
-  $a-$a-$a            <=> -$a;
-  $a*$b*$a*$b         <=> $a**2*$b**2;
- ($b/$a)**2           <=> $b**2/$a**2;
-  $a**2/$b            <=> '1/2';
-  sqrt($a**4/($b/2))  <=> $a;
-  $b**128             <=> '340282366920938463463374607431768211456';
-           
-# Sin, Cos, Exp
-  sin($zero)          <=> -0;
-  sin($pi/6)          <=>  $half;
-  sin($pi/2)          <=>  1;
-  sin(5*$pi/6)        <=>  $half;
-  sin(120*$pi/120)    <=>  $zero;
-  sin(7*$pi/6)        <=> -$half;
-  sin(3*$pi/2)        <=> -1;
-  sin(110*$pi/ 60)    <=> '-1/2';
-  sin(2*$pi)          <=>  $zero;
-  sin(-$zero)         <=>  $zero;
-  sin(-$pi/6)         <=> -$half;
-  sin(-$pi/2)         <=> -$one;
-  sin(-5*$pi/6)       <=> -$half;
-  sin(-120*$pi/120)   <=> -$zero;
-  sin(-7*$pi/6)       <=>  $half;
-  sin(-3*$pi/2)       <=>  $one;
-  sin(-110*$pi/ 60)   <=>  $half;
-  sin(-2*$pi)         <=>  $zero;
-  cos($zero)          <=>  $one;
-  cos($pi/3)          <=>  $half;
-  cos($pi/2)          <=>  $zero;
-  cos(4*$pi/6)        <=> -$half;
-  cos(120*$pi/120)    <=> -$one;
-  cos(8*$pi/6)        <=> -$half;
-  cos(3*$pi/2)        <=>  $zero;
-  cos(100*$pi/ 60)    <=>  $half;
-  cos(2*$pi)          <=>  $one;
-  cos(-$zero)         <=>  $one;
-  cos(-$pi/3)         <=> +$half;
-  cos(-$pi/2)         <=>  $zero;
-  cos(-4*$pi/6)       <=> -$half;
-  cos(-120*$pi/120)   <=> -$one;
-  cos(-8*$pi/6)       <=> -$half;
-  cos(-3*$pi/2)       <=>  $zero;
-  cos(-100*$pi/ 60)   <=>  $half;
-  cos(-2*$pi)         <=>  $one;
-  exp($zero)          <=>  $one;
-  exp($i*$pi/2)       <=>  $i;
-  exp($i*$pi)         <=> -$one;
-  exp(3*$i*$pi/2)     <=> -$i;
-  exp(4*$i*$pi/2)     <=>  $one;
-
-# Polynomials
- ($x, $y) = n(qw(x y));
-  $x+$y               <=> $x+$y;
- ($x+$y)**2           <=> $x**2+2*$x*$y+$y**2;
- ($x+$y)**2/$x        <=> $x+2*$y+$y**2/$x;
-
- ($x+$y)**2/($x+$y)            <=> $x+$y;
- ($x*$x+2*$y*$x+$y**2)/($x+$y) <=> $x+$y;
-
-# Differentiation
-  sin($x)    <=>  sin($x)->d->d->d->d; 
-  exp($x)    <=>  exp($x)->d->d->d->d;
- (1/$x)->d   <=> -1/$x**2;
-
-  sqrt(($x+$y)**2)+$x-$y                                                <=> 2*$x;
-  sqrt(($x+$y)**2)+sqrt(($x-$y)**2)                                     <=> 2*$x;
-  sqrt(($x+$y)**2)+sqrt(($x-$y)**2)+sqrt((-$x+$y)**2)+sqrt((-$x-$y)**2) <=> 4*$x;
- ($x*sqrt($x))->d <=> 3*sqrt($x)/2;
-
-# Complex
-  ($i ^ 1)  <=> 0;
-  ($i ^ $i) <=> 1;
-  $i x 1    <=> 1;                                     
-  $i x $i   <=> 0;                                     
-  $one x 1  <=> 0;                                     
-  !$i       <=> $i;
-  abs $i    <=> 1;
-  re  $i    <=> 0;
-  im  $i    <=> 1;
-  re  $one  <=> 1;
-  im  $one  <=> 0;
-
-  ~($x+$y)  <=>  ~$x + ~$y;
-  ~($x*$y)  <=>  ~$x * ~$y;
-  ~($x**2)  <=> (~$x)** 2;
-
-  abs($x+$y*$i)    <=> sqrt($x**2+$y**2);
-  !($x+$y*$i)      <=> ($x+$y*$i) / sqrt($x**2+$y**2);
-  abs(!($x+$y*$i)) <=> sqrt($x**2/($x**2+$y**2)+$y**2/($x**2+$y**2));
-
-  abs(($a+$i*sqrt(1-$a*$a))*($b+$i*sqrt(1-$b*$b))) <=> 1;
-  abs($a+$i*$b)*abs($x+$i*$y) <=> abs(($a+$i*$b)*($x+$i*$y));
-
-  ($i+1) x ($i-1) <=> 2;
-  (1+$i  ^ -1+$i) <=> 0;
-
-#______________________________________________________________________
-# Trigonometric
-#______________________________________________________________________
-   
-# Reciprocals
-  $a = sin($x) <=> 1/csc($x);
-  $a = cos($x) <=> 1/sec($x);
-  $a = tan($x) <=> 1/cot($x);
-  $a = csc($x) <=> 1/sin($x);
-  $a = sec($x) <=> 1/cos($x);
-  $a = cot($x) <=> 1/tan($x);
-                           
-# Pythagoras
-
-  sin($x)**2 + cos($x)**2 <=> 1;
-  sec($x)**2 - tan($x)**2 <=> $one; 
-  csc($x)**2 - cot($x)**2 <=> 1; 
-
-# Quotient  
-
-  tan($x) <=> sin($x)/cos($x);
-  cot($x) <=> cos($x)/sin($x);   
-
-# Co-Function Identities
-
-  $pi = n('pi');                  
-  sin($x) <=> cos($pi/2-$x);
-  cos($x) <=> sin($pi/2-$x);
-  cot($x) <=> tan($pi/2-$x);
-  sec($x) <=> csc($pi/2-$x);
-  csc($x) <=> sec($pi/2-$x);
-  tan($x) <=> cot($pi/2-$x);
-
-# Even-Odd Identities
-                         
-  cos($x) <=>  cos(-$x); 
-  sin($x) <=> -sin(-$x); 
-  tan($x) <=> -tan(-$x); 
-  cot($x) <=> -cot(-$x); 
-  csc($x) <=> -csc(-$x); 
-  sec($x) <=>  sec(-$x); 
-
-# Values of sin, cos at well known points
-
-  cos(0)         <=>   1;
-  cos($pi/2)     <=>   0;
-  cos($pi)       <=>  -1;
-  cos(3*$pi/2)   <=>   0;
-  cos(4*$pi/2)   <=>   1;
-  sin(0)         <=>   0;
-  sin($pi/2)     <=>   1;
-  sin($pi)       <=>   0;
-  sin(3*$pi/2)   <=>  -1;
-  sin(4*$pi/2)   <=>   0;
-
-# Sums and Differences
-                                                 
-  sin($x+$y) <=> sin($x)*cos($y)+cos($x)*sin($y);
-  sin($x-$y) <=> sin($x)*cos($y)-cos($x)*sin($y);
-  cos($x+$y) <=> cos($x)*cos($y)-sin($x)*sin($y);
-  cos($x-$y) <=> cos($x)*cos($y)+sin($x)*sin($y);
-
-  tan($x+$y) <=> (tan($x)+tan($y))/(1-tan($x)*tan($y));
-  tan($x-$y) <=> (tan($x)-tan($y))/(1+tan($x)*tan($y));
-
-# Double angles        
-                                           
-  sin(2*$x) <=> 2*sin($x)*cos($x);         
-  cos(2*$x) <=> cos($x)**2-sin($x)**2;     
-  cos(2*$x) <=> 2*cos($x)**2-1;            
-  cos(2*$x) <=> 1-2*sin($x)**2;            
-  tan(2*$x) <=> 2*tan($x)/(1-tan($x)**2);  
-
-# Power-Reducing/Half Angle Formulas       
-                                                            
-  sin($x)**2 <=> (1-cos(2*$x))/2;                         
-  cos($x)**2 <=> (1+cos(2*$x))/2;                         
-  tan($x)**2 <=> (1-cos(2*$x))/(1+cos(2*$x));             
-
-# Sum-to-Product Formulas      
-                                                            
-  sin($x)+sin($y) <=>  2*sin(($x+$y)/2)*cos(($x-$y)/2);     
-  sin($x)-sin($y) <=>  2*cos(($x+$y)/2)*sin(($x-$y)/2);     
-  cos($x)+cos($y) <=>  2*cos(($x+$y)/2)*cos(($x-$y)/2);     
-  cos($x)-cos($y) <=> -2*sin(($x+$y)/2)*sin(($x-$y)/2);   
-
-# Product-to-Sum Formulas       
-                                                   
-  sin($x)*sin($y) <=> cos($x-$y)/2-cos($x+$y)/2;   
-  cos($x)*cos($y) <=> cos($x-$y)/2+cos($x+$y)/2;   
-  sin($x)*cos($y) <=> sin($x+$y)/2+sin($x-$y)/2;   
-  cos($x)*sin($y) <=> sin($x+$y)/2-sin($x-$y)/2;   
-
-#______________________________________________________________________
-# Differentials.
-#______________________________________________________________________
-
-  sqrt($x**3)->d         <=> '3/2'*sqrt($x);
-  (1/$x**10) ->d         <=>  -10/$x**11;
-  ((1+$x)/sqrt(1+$x))->d <=> sqrt(1+$x)->d;
-  exp($i*$x)             <=> exp($i*$x)->d->d->d->d;
-
-  cos($x)    <=> -cos($x)->d->d;
-  sin($x)    <=> -sin($x)->d->d;
-
-  sin($x)->d <=>  cos($x); 
-  cos($x)->d <=> -sin($x);
-  tan($x)->d <=>  tan($x)**2 + 1;
-  tan($x)->d <=>  sec($x)**2;
-  cot($x)->d <=> -csc($x)**2;
-  sec($x)->d <=>  sec($x)*tan($x);
-  csc($x)->d <=> -csc($x)*cot($x);
-
-#______________________________________________________________________
-# Hyperbolic functions
-#______________________________________________________________________
-  
-  cosh($x)->d <=> sinh($x);
-  sinh($x)->d <=> cosh($x);
-  
-  cosh($x)**2-sinh($x)**2 <=> 1;
-  cosh($x+$y)             <=> cosh($x)*cosh($y)+sinh($x)*sinh($y);
-  sinh($x+$y)             <=> sinh($x)*cosh($y)+cosh($x)*sinh($y);
-   
-# Reciprocals
-          
-  sinh($x) <=> 1/csch($x);
-  cosh($x) <=> 1/sech($x);                            
-  tanh($x) <=> 1/coth($x);                            
-  csch($x) <=> 1/sinh($x);                            
-  sech($x) <=> 1/cosh($x);                            
-  coth($x) <=> 1/tanh($x);
-
-# Pythagoras
-                           
-  cosh($x)**2 - sinh($x)**2 <=> 1;
-  tanh($x)**2 + sech($x)**2 <=> 1;
-  coth($x)**2 - csch($x)**2 <=> 1;
-                            
-# Relations to Trigonometric Functions
-          
-  sinh($x) <=> -$i*sin($i*$x);
-  csch($x) <=>  $i*csc($i*$x);
-  cosh($x) <=>     cos($i*$x);
-  sech($x) <=>     sec($i*$x);
-  tanh($x) <=> -$i*tan($i*$x);
-  coth($x) <=>  $i*cot($i*$x);
-
-#______________________________________________________________________
-# Exp.
-#______________________________________________________________________
-   
-  exp($x)*exp($i*$x)*exp($x)*exp(-$i*$x)-exp(2*$x) <=> 0;
-
-  1+$one+'1/2'*$one**2+'1/6'*$one**3+'1/24'*$one**4+'1/120'*$one**5+
-       '1/720'*$one**6+'1/5040'*$one**7+'1/40320'*$one**8
-        <=> '109601/40320';
-
-# exp(log($x)) <=> $x;
-# log(exp($x)) <=> $x;
-  exp($i*$pi)  <=> -1;
-  $i*exp(3*$i*$pi/2) <=> 1;
-
-#______________________________________________________________________
-# Polynomials.
-#______________________________________________________________________
-   
-  ($x+$x*$x)*$y/($x*$y)                <=> 1+$x;
-  (2*$x*$y**20) / (4*$y**19+4*$y**19)  <=> ($x*$y)/4;
-  (4*$b+4*$a*$b)/(4*$b+4*$a*$b)        <=> 1/($a+1)*$a+1/($a+1);
-
-  ($c2, $c3) = n(qw(2 3));
-  (sqrt($c2)+sqrt($c3))**4 <=> 10*(sqrt($c2)+sqrt($c3))**2 - 1; # Polynomial with sqrt(2)+sqrt(3) as a zero
-  ($x**16-1)/($x**8-1)                 <=> $x**8+1;
-  ($x+1)**11 / (1+$x)**12              <=> 1/($x+1);
-  ($x**2 + $y**2)/($x**2 + $y**2)      <=> 1;
-  ($x**2 + 2*$x*$y +$y**2) / ($x+$y)   <=> $x+$y;
-  (($x**2-1)/(($x+1)*($x-1)))          <=> 1;  # checks polynomial division 
-
-#______________________________________________________________________
-# Square roots.
-#______________________________________________________________________
-
-  sqrt($x+1) / sqrt(1+$x)                <=> 1;
-  2*$y**2*sqrt($x+1) / (4*$y*sqrt(1+$x)) <=> $y/2;
-  1/sqrt(1+$x)                           <=> 1/sqrt(1+$x); 
-  1/sqrt(1+$x)**3                        <=> 1/(sqrt(1+$x)+sqrt(1+$x)*$x);
-  sqrt($x+1)**3 / sqrt(1+$x)**3          <=> 1;
-
-#______________________________________________________________________
-# Pentagon
-#______________________________________________________________________
-
-   {my ($i, $x, $f) = n(qw(i x 5));
-    $x = ($one+sqrt($f)) / 4; 
-    $a = ($x+$i*sqrt(1-$x*$x))**3;
-    $b = ($x+$i*sqrt(1-$x*$x))**2;
-    $c = $a-$b;
-    $d = $c->im;
-    $e = $d<=> $zero;
-    $e = $e;
-   }
-#______________________________________________________________________
-# Cot of successively halved angles, starting at pi/6.
-#______________________________________________________________________
-
-   {my ($y, $h) = n(qw(1 2));
-  
-    my $x = sqrt($h**2 - $y**2);
-    for $i(1..5)
-     {$x   += $h;
-      $h    = sqrt($y**2+$x**2);
-     }
-    print __LINE__;
-    eval("$h") eq '61.1182253094272' or die;
-   }
-  print "\n";
- }
-
-test unless caller;
-
-#_ Sum __________________________________________________________________
 # Package installed successfully
 #________________________________________________________________________
 
@@ -1988,19 +1814,21 @@ Math::Algebra::Symbols - Symbolic Algebra using Perl
 
  use Math::Algebra::Symbols hyper=>1;
 
- ($n, $x, $y) = symbols(qw(n x y));
+ my ($n, $x, $y) = symbols(qw(n x y));
 
-  $a     = sin($x)**2 + cos($x)**2; 
-  $b     = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x)) == $n**4;
-  $c     = tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
- ($d,$e) = @{($x**2-5*$x+6) > $x};
+ my  $a    += ($x**8 - 1)/($x-1);
+ my  $b    +=  sin($x)**2 + cos($x)**2; 
+ my  $c    += (sin($n*$x) + cos($n*$x))->d->d->d->d / (sin($n*$x)+cos($n*$x));
+ my  $d     =  tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+ my ($e,$f) =  @{($x**2 eq 5*$x-6) > $x};
 
- print "$a\n$b\n$c\n$d,$e\n";
+ print "$a\n$b\n$c\n$d\n$e,$f\n";
 
- # 1                                        
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
  # 1
- # 1                                   
- # 2,3                                        
+ # $n**4
+ # 1
+ # 2,3
 
 =head1 DESCRIPTION
 
@@ -2167,47 +1995,8 @@ result.
 The relational operator B<eq> is a synonym for the minus B<-> operator,
 with the expectation that later on the L<solve()|/Solving equations>
 function will be used to simplify and rearrange the equation. You may
-prefer to use B<eq> instead of B<-> to enhace readability, ther si no
+prefer to use B<eq> instead of B<-> to enhance readability, there is no
 functional difference.
-
-=head3 Implication operators
-
-=head4 Solve operator: B<E<gt>> 
-
- use Math::Algebra::Symbols;
-
- ($x, $v, $t) = symbols(qw(x v t));
-
- $z = ($v eq $x / $t) > [qw(x in terms of v t)];
-
- print "x=$z\n";
-
- # x=$v*$t
-
-The solve operator B<E<gt>> is a synonym for the L<solve()|/Solving
-equations> function.
-
-The priority of B<E<gt>> is higher than that of B<eq>, so the brackets
-around the equation to be solved are necessary until Perl provides a
-mechanism for adjusting operator priority (cf. Algol 68).
-
-If the equation is in a single variable, the single variable
-may be named after the B<E<gt>> operator without the use of [...]:
-
- use Math::Algebra::Symbols;
-
- my $rabbit  = 10 + 5 * $t;
- my $fox     = 7 * $t * $t;
- my ($a, $b) = @{($rabbit eq $fox) > $t};
-
- print "$a\n";
-
- # 1/14*sqrt(305)+5/14
-
-If there are multiple solutions, (as in the case of polynomials), B<E<gt>>
-returns an array of symbolic expressions containing the solutions.
-
-This example was provided by Mike Schilli m@perlmeister.com.
 
 =head3 Complex operators
 
@@ -2291,6 +2080,66 @@ The B<abs> operator returns the modulus (length) of its right hand side.
 
 The B<!> operator returns a complex number of unit length pointing in
 the same direction as its right hand side.
+
+=head3 Equation Manipulation Operators
+
+=head4 Equation Manipulation Operators: B<Simplify> operator: B<+=>
+
+ use Math::Algebra::Symbols;
+ 
+ ($x) = symbols(qw(x));
+ 
+  $z += ($x**8 - 1)/($x-1);
+
+ print "$z\n";
+
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
+
+The simplify operator B<+=> is a synonym for the
+L<simplify()|/"simplifying_equations:_simplify()"> method, if and only
+if, the target on the left hand side initially has a value of undef.
+Admittedly this is very strange behavior: it arises due to the shortage
+of over-rideable operators in Perl: in particular it arises due to the
+shortage of over-rideable unary operators in Perl. Never-the-less: this
+operator is useful as can be seen in the L<Synopsis|/"synopsis">, and
+the desired pre-condition can always achieved by using B<my>.
+
+=head4 Equation Manipulation Operators: B<Solve> operator: B<E<gt>> 
+
+ use Math::Algebra::Symbols;
+
+ ($x, $v, $t) = symbols(qw(x v t));
+
+ $z = ($v eq $x / $t) > [qw(x in terms of v t)];
+
+ print "x=$z\n";
+
+ # x=$v*$t
+
+The solve operator B<E<gt>> is a synonym for the
+L<solve()|/"Solving_equations:_solve()"> method.
+
+The priority of B<E<gt>> is higher than that of B<eq>, so the brackets
+around the equation to be solved are necessary until Perl provides a
+mechanism for adjusting operator priority (cf. Algol 68).
+
+If the equation is in a single variable, the single variable
+may be named after the B<E<gt>> operator without the use of [...]:
+
+ use Math::Algebra::Symbols;
+
+ my $rabbit  = 10 + 5 * $t;
+ my $fox     = 7 * $t * $t;
+ my ($a, $b) = @{($rabbit eq $fox) > $t};
+
+ print "$a\n";
+
+ # 1/14*sqrt(305)+5/14
+
+If there are multiple solutions, (as in the case of polynomials), B<E<gt>>
+returns an array of symbolic expressions containing the solutions.
+
+This example was provided by Mike Schilli m@perlmeister.com.
 
 =head2 Functions
 
@@ -2401,7 +2250,38 @@ overloading.
 
 =head3 Methods for manipulating Equations             
 
-=head4 Simplifying equations: B<sub()>
+=head4 Simplifying equations: B<simplify()>
+
+ use Math::Algebra::Symbols;
+ 
+ ($x) = symbols(qw(x));
+ 
+  $y  = (($x**8 - 1)/($x-1))->simplify();  # Simplify method 
+  $z +=  ($x**8 - 1)/($x-1);               # Simplify via += 
+
+ print "$y\n$z\n";
+
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
+
+B<Simplify()> attempts to simplify an expression. There is no general
+simplification algorithm: consequently simplifications are carried out
+on ad hoc basis. You may not even agree that the proposed simplification
+for a given expressions is indeed any simpler than the original. It is
+for these reasons that simplification has to be explicitly requested
+rather than being performed automagically.
+
+At the moment, simplifications consist of polynomial division: when the
+expression consists, in essence, of one polynomial divided by another,
+an attempt is made to perform polynomial division, the result is
+returned if there is no remainder.
+
+The B<+=> operator may be used to simplify and assign an expression to a
+Perl variable. Perl operator overloading precludes the use of B<=> in this
+manner. 
+
+
+=head4 Substituting into equations: B<sub()>
 
  use Math::Algebra::Symbols;
  
@@ -2425,12 +2305,19 @@ effect as B<z> is not present in this equation.
 Line B<#2> demonstrates the resulting rational fraction that arises when
 all the variables have been replaced by constants. This package does not
 convert fractions to decimal expressions in case there is a loss of
-acuracy, however:
+accuracy, however:
 
  $e3 =~ /^(\d+)\/(\d+)$/;
  $result = $1/$2;
 
 or similar will produce approximate results.
+
+At the moment only variables can be replaced by expressions. Mike
+Schilli, m@perlmeister.com, has proposed that substitutions for
+expressions should also be allowed, as in:
+
+ $x/$y => $z
+ 
 
 =head4 Solving equations: B<solve()>
 
@@ -2485,7 +2372,7 @@ returns an array of symbolic expressions containing the solutions.
 B<d()> differentiates the equation on the left hand side by the named
 variable.
 
-The variable to be differentiated by may be explicitly specifed,
+The variable to be differentiated by may be explicitly specified,
 either as a string or as single symbol; or it may be heuristically
 guessed as follows:
 
@@ -2678,11 +2565,11 @@ the B<Symbols> package.
 
 Thus B<SymbolsTerm> can represent expressions like:
 
-  2/3*x**2*y**-3*exp(i*pi)*sqrt(z**3) / x
+  2/3*$x**2*$y**-3*exp($i*$pi)*sqrt($z**3) / $x
 
 but not:
 
-  x + y
+  $x + $y
 
 for which package B<SymbolsSum> is required. 
 

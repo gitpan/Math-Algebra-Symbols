@@ -6,7 +6,7 @@
 #________________________________________________________________________
 
 package Math::Algebra::Symbols;
-$VERSION = 1.17;
+$VERSION = 1.18;
 
 use Math::Algebra::SymbolsSum;
 use Math::Algebra::SymbolsTerm;
@@ -175,57 +175,6 @@ END
  }
 
 #_ Symbols ______________________________________________________________
-# Overload.
-#________________________________________________________________________
-
-use overload
- '+'     =>\&add3,
- '-'     =>\&negate3,
- '*'     =>\&multiply3,
- '/'     =>\&divide3,
- '**'    =>\&power3,
- '=='    =>\&equals3,
- '<=>'   =>\&tequals3,
- 'sqrt'  =>\&sqrt3,
- 'exp'   =>\&exp3,
- 'log'   =>\&log3,
- 'tan'   =>\&tan3,
- 'sin'   =>\&sin3,
- 'cos'   =>\&cos3,
- '""'    =>\&print3,
- '^'     =>\&dot3,       # Beware the low priority of this operator
- '~'     =>\&conjugate3,  
- 'x'     =>\&cross3,  
- 'abs'   =>\&modulus3,  
- '!'     =>\&unit3,  
- fallback=>1;
-
-#_ Symbols ______________________________________________________________
-# Operators.
-#________________________________________________________________________
-
-sub add3      {$_[0]->add3      ($_[1],$_[2])}
-sub negate3   {$_[0]->negate3   ($_[1],$_[2])}
-sub multiply3 {$_[0]->multiply3 ($_[1],$_[2])}
-sub divide3   {$_[0]->divide3   ($_[1],$_[2])}
-sub power3    {$_[0]->power3    ($_[1],$_[2])}
-sub equals3   {$_[0]->equals3   ($_[1],$_[2])}
-sub nequal3   {$_[0]->nequal3   ($_[1],$_[2])}
-sub tequals3  {$_[0]->tequals3  ($_[1],$_[2])}
-sub print3    {$_[0]->print3    ($_[1],$_[2])}
-sub sqrt3     {$_[0]->sqrt3     ($_[1],$_[2])}
-sub exp3      {$_[0]->exp3      ($_[1],$_[2])}
-sub sin3      {$_[0]->sin3      ($_[1],$_[2])}
-sub cos3      {$_[0]->cos3      ($_[1],$_[2])}
-sub tan3      {$_[0]->tan3      ($_[1],$_[2])}
-sub log3      {$_[0]->log3      ($_[1],$_[2])}
-sub dot3      {$_[0]->dot3      ($_[1],$_[2])}
-sub cross3    {$_[0]->cross3    ($_[1],$_[2])}
-sub unit3     {$_[0]->unit3     ($_[1],$_[2])}
-sub modulus3  {$_[0]->modulus3  ($_[1],$_[2])}
-sub conjugate3{$_[0]->conjugate3($_[1],$_[2])}
-
-#_ Symbols ______________________________________________________________
 # Package installed successfully
 #________________________________________________________________________
 
@@ -245,19 +194,21 @@ Math::Algebra::Symbols - Symbolic Algebra using Perl
 
  use Math::Algebra::Symbols hyper=>1;
 
- ($n, $x, $y) = symbols(qw(n x y));
+ my ($n, $x, $y) = symbols(qw(n x y));
 
-  $a     = sin($x)**2 + cos($x)**2; 
-  $b     = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x)) == $n**4;
-  $c     = tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
- ($d,$e) = @{($x**2-5*$x+6) > $x};
+ my  $a    += ($x**8 - 1)/($x-1);
+ my  $b    +=  sin($x)**2 + cos($x)**2; 
+ my  $c    += (sin($n*$x) + cos($n*$x))->d->d->d->d / (sin($n*$x)+cos($n*$x));
+ my  $d     =  tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+ my ($e,$f) =  @{($x**2 eq 5*$x-6) > $x};
 
- print "$a\n$b\n$c\n$d,$e\n";
+ print "$a\n$b\n$c\n$d\n$e,$f\n";
 
- # 1                                        
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
  # 1
- # 1                                   
- # 2,3                                        
+ # $n**4
+ # 1
+ # 2,3
 
 =head1 DESCRIPTION
 
@@ -424,47 +375,8 @@ result.
 The relational operator B<eq> is a synonym for the minus B<-> operator,
 with the expectation that later on the L<solve()|/Solving equations>
 function will be used to simplify and rearrange the equation. You may
-prefer to use B<eq> instead of B<-> to enhace readability, ther si no
+prefer to use B<eq> instead of B<-> to enhance readability, there is no
 functional difference.
-
-=head3 Implication operators
-
-=head4 Solve operator: B<E<gt>> 
-
- use Math::Algebra::Symbols;
-
- ($x, $v, $t) = symbols(qw(x v t));
-
- $z = ($v eq $x / $t) > [qw(x in terms of v t)];
-
- print "x=$z\n";
-
- # x=$v*$t
-
-The solve operator B<E<gt>> is a synonym for the L<solve()|/Solving
-equations> function.
-
-The priority of B<E<gt>> is higher than that of B<eq>, so the brackets
-around the equation to be solved are necessary until Perl provides a
-mechanism for adjusting operator priority (cf. Algol 68).
-
-If the equation is in a single variable, the single variable
-may be named after the B<E<gt>> operator without the use of [...]:
-
- use Math::Algebra::Symbols;
-
- my $rabbit  = 10 + 5 * $t;
- my $fox     = 7 * $t * $t;
- my ($a, $b) = @{($rabbit eq $fox) > $t};
-
- print "$a\n";
-
- # 1/14*sqrt(305)+5/14
-
-If there are multiple solutions, (as in the case of polynomials), B<E<gt>>
-returns an array of symbolic expressions containing the solutions.
-
-This example was provided by Mike Schilli m@perlmeister.com.
 
 =head3 Complex operators
 
@@ -548,6 +460,66 @@ The B<abs> operator returns the modulus (length) of its right hand side.
 
 The B<!> operator returns a complex number of unit length pointing in
 the same direction as its right hand side.
+
+=head3 Equation Manipulation Operators
+
+=head4 Equation Manipulation Operators: B<Simplify> operator: B<+=>
+
+ use Math::Algebra::Symbols;
+ 
+ ($x) = symbols(qw(x));
+ 
+  $z += ($x**8 - 1)/($x-1);
+
+ print "$z\n";
+
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
+
+The simplify operator B<+=> is a synonym for the
+L<simplify()|/"simplifying_equations:_simplify()"> method, if and only
+if, the target on the left hand side initially has a value of undef.
+Admittedly this is very strange behavior: it arises due to the shortage
+of over-rideable operators in Perl: in particular it arises due to the
+shortage of over-rideable unary operators in Perl. Never-the-less: this
+operator is useful as can be seen in the L<Synopsis|/"synopsis">, and
+the desired pre-condition can always achieved by using B<my>.
+
+=head4 Equation Manipulation Operators: B<Solve> operator: B<E<gt>> 
+
+ use Math::Algebra::Symbols;
+
+ ($x, $v, $t) = symbols(qw(x v t));
+
+ $z = ($v eq $x / $t) > [qw(x in terms of v t)];
+
+ print "x=$z\n";
+
+ # x=$v*$t
+
+The solve operator B<E<gt>> is a synonym for the
+L<solve()|/"Solving_equations:_solve()"> method.
+
+The priority of B<E<gt>> is higher than that of B<eq>, so the brackets
+around the equation to be solved are necessary until Perl provides a
+mechanism for adjusting operator priority (cf. Algol 68).
+
+If the equation is in a single variable, the single variable
+may be named after the B<E<gt>> operator without the use of [...]:
+
+ use Math::Algebra::Symbols;
+
+ my $rabbit  = 10 + 5 * $t;
+ my $fox     = 7 * $t * $t;
+ my ($a, $b) = @{($rabbit eq $fox) > $t};
+
+ print "$a\n";
+
+ # 1/14*sqrt(305)+5/14
+
+If there are multiple solutions, (as in the case of polynomials), B<E<gt>>
+returns an array of symbolic expressions containing the solutions.
+
+This example was provided by Mike Schilli m@perlmeister.com.
 
 =head2 Functions
 
@@ -658,7 +630,38 @@ overloading.
 
 =head3 Methods for manipulating Equations             
 
-=head4 Simplifying equations: B<sub()>
+=head4 Simplifying equations: B<simplify()>
+
+ use Math::Algebra::Symbols;
+ 
+ ($x) = symbols(qw(x));
+ 
+  $y  = (($x**8 - 1)/($x-1))->simplify();  # Simplify method 
+  $z +=  ($x**8 - 1)/($x-1);               # Simplify via += 
+
+ print "$y\n$z\n";
+
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
+
+B<Simplify()> attempts to simplify an expression. There is no general
+simplification algorithm: consequently simplifications are carried out
+on ad hoc basis. You may not even agree that the proposed simplification
+for a given expressions is indeed any simpler than the original. It is
+for these reasons that simplification has to be explicitly requested
+rather than being performed automagically.
+
+At the moment, simplifications consist of polynomial division: when the
+expression consists, in essence, of one polynomial divided by another,
+an attempt is made to perform polynomial division, the result is
+returned if there is no remainder.
+
+The B<+=> operator may be used to simplify and assign an expression to a
+Perl variable. Perl operator overloading precludes the use of B<=> in this
+manner. 
+
+
+=head4 Substituting into equations: B<sub()>
 
  use Math::Algebra::Symbols;
  
@@ -682,12 +685,19 @@ effect as B<z> is not present in this equation.
 Line B<#2> demonstrates the resulting rational fraction that arises when
 all the variables have been replaced by constants. This package does not
 convert fractions to decimal expressions in case there is a loss of
-acuracy, however:
+accuracy, however:
 
  $e3 =~ /^(\d+)\/(\d+)$/;
  $result = $1/$2;
 
 or similar will produce approximate results.
+
+At the moment only variables can be replaced by expressions. Mike
+Schilli, m@perlmeister.com, has proposed that substitutions for
+expressions should also be allowed, as in:
+
+ $x/$y => $z
+ 
 
 =head4 Solving equations: B<solve()>
 
@@ -742,7 +752,7 @@ returns an array of symbolic expressions containing the solutions.
 B<d()> differentiates the equation on the left hand side by the named
 variable.
 
-The variable to be differentiated by may be explicitly specifed,
+The variable to be differentiated by may be explicitly specified,
 either as a string or as single symbol; or it may be heuristically
 guessed as follows:
 
@@ -935,11 +945,11 @@ the B<Symbols> package.
 
 Thus B<SymbolsTerm> can represent expressions like:
 
-  2/3*x**2*y**-3*exp(i*pi)*sqrt(z**3) / x
+  2/3*$x**2*$y**-3*exp($i*$pi)*sqrt($z**3) / $x
 
 but not:
 
-  x + y
+  $x + $y
 
 for which package B<SymbolsSum> is required. 
 

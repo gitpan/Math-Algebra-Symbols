@@ -44,12 +44,6 @@
 				<li><a href="#relational_operator:_eq">Relational operator: <strong>eq</strong></a></li>
 			</ul>
 
-			<li><a href="#implication_operators">Implication operators</a></li>
-			<ul>
-
-				<li><a href="#solve_operator:_>">Solve operator: <strong>&gt;</strong></a></li>
-			</ul>
-
 			<li><a href="#complex_operators">Complex operators</a></li>
 			<ul>
 
@@ -58,6 +52,13 @@
 				<li><a href="#complex_operators:_the_conjugate_operator:_~">Complex operators: the <strong>conjugate</strong> operator: <strong>~</strong></a></li>
 				<li><a href="#complex_operators:_the_modulus_operator:_abs">Complex operators: the <strong>modulus</strong> operator: <strong>abs</strong></a></li>
 				<li><a href="#complex_operators:_the_unit_operator:_!">Complex operators: the <strong>unit</strong> operator: <strong>!</strong></a></li>
+			</ul>
+
+			<li><a href="#equation_manipulation_operators">Equation Manipulation Operators</a></li>
+			<ul>
+
+				<li><a href="#equation_manipulation_operators:_simplify_operator:_+=">Equation Manipulation Operators: <strong>Simplify</strong> operator: <strong>+=</strong></a></li>
+				<li><a href="#equation_manipulation_operators:_solve_operator:_>">Equation Manipulation Operators: <strong>Solve</strong> operator: <strong>&gt;</strong></a></li>
 			</ul>
 
 		</ul>
@@ -88,7 +89,8 @@
 			<li><a href="#methods_for_manipulating_equations">Methods for manipulating Equations</a></li>
 			<ul>
 
-				<li><a href="#simplifying_equations:_sub()">Simplifying equations: <strong>sub()</strong></a></li>
+				<li><a href="#simplifying_equations:_simplify()">Simplifying equations: <strong>simplify()</strong></a></li>
+				<li><a href="#substituting_into_equations:_sub()">Substituting into equations: <strong>sub()</strong></a></li>
 				<li><a href="#solving_equations:_solve()">Solving equations: <strong>solve()</strong></a></li>
 			</ul>
 
@@ -135,18 +137,20 @@
 <pre>
  use Math::Algebra::Symbols hyper=&gt;1;</pre>
 <pre>
- ($n, $x, $y) = symbols(qw(n x y));</pre>
+ my ($n, $x, $y) = symbols(qw(n x y));</pre>
 <pre>
-  $a     = sin($x)**2 + cos($x)**2; 
-  $b     = (sin($n*$x)+cos($n*$x))-&gt;d-&gt;d-&gt;d-&gt;d/(sin($n*$x)+cos($n*$x)) == $n**4;
-  $c     = tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
- ($d,$e) = @{($x**2-5*$x+6) &gt; $x};</pre>
+ my  $a    += ($x**8 - 1)/($x-1);
+ my  $b    +=  sin($x)**2 + cos($x)**2; 
+ my  $c    += (sin($n*$x) + cos($n*$x))-&gt;d-&gt;d-&gt;d-&gt;d / (sin($n*$x)+cos($n*$x));
+ my  $d     =  tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+ my ($e,$f) =  @{($x**2 eq 5*$x-6) &gt; $x};</pre>
 <pre>
- print &quot;$a\n$b\n$c\n$d,$e\n&quot;;</pre>
+ print &quot;$a\n$b\n$c\n$d\n$e,$f\n&quot;;</pre>
 <pre>
- # 1                                        
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
  # 1
- # 1                                   
+ # $n**4
+ # 1
  # 2,3</pre>
 <p>
 </p>
@@ -317,43 +321,8 @@ result.</p>
 <p>The relational operator <strong>eq</strong> is a synonym for the minus <strong>-</strong> operator,
 with the expectation that later on the <a href="#solving_equations">solve()</a>
 function will be used to simplify and rearrange the equation. You may
-prefer to use <strong>eq</strong> instead of <strong>-</strong> to enhace readability, ther si no
+prefer to use <strong>eq</strong> instead of <strong>-</strong> to enhance readability, there is no
 functional difference.</p>
-<p>
-</p>
-<h3><a name="implication_operators">Implication operators</a></h3>
-<p>
-</p>
-<h4><a name="solve_operator:_>">Solve operator: <strong>&gt;</strong></a></h4>
-<pre>
- use Math::Algebra::Symbols;</pre>
-<pre>
- ($x, $v, $t) = symbols(qw(x v t));</pre>
-<pre>
- $z = ($v eq $x / $t) &gt; [qw(x in terms of v t)];</pre>
-<pre>
- print &quot;x=$z\n&quot;;</pre>
-<pre>
- # x=$v*$t</pre>
-<p>The solve operator <strong>&gt;</strong> is a synonym for the <a href="#solving_equations">solve()</a> function.</p>
-<p>The priority of <strong>&gt;</strong> is higher than that of <strong>eq</strong>, so the brackets
-around the equation to be solved are necessary until Perl provides a
-mechanism for adjusting operator priority (cf. Algol 68).</p>
-<p>If the equation is in a single variable, the single variable
-may be named after the <strong>&gt;</strong> operator without the use of [...]:</p>
-<pre>
- use Math::Algebra::Symbols;</pre>
-<pre>
- my $rabbit  = 10 + 5 * $t;
- my $fox     = 7 * $t * $t;
- my ($a, $b) = @{($rabbit eq $fox) &gt; $t};</pre>
-<pre>
- print &quot;$a\n&quot;;</pre>
-<pre>
- # 1/14*sqrt(305)+5/14</pre>
-<p>If there are multiple solutions, (as in the case of polynomials), <strong>&gt;</strong>
-returns an array of symbolic expressions containing the solutions.</p>
-<p>This example was provided by Mike Schilli <a href="mailto:m@perlmeister.com.">m@perlmeister.com.</a></p>
 <p>
 </p>
 <h3><a name="complex_operators">Complex operators</a></h3>
@@ -436,6 +405,63 @@ the expression correctly.</p>
  # $i*sqrt(1/2)+sqrt(1/2)</pre>
 <p>The <strong>!</strong> operator returns a complex number of unit length pointing in
 the same direction as its right hand side.</p>
+<p>
+</p>
+<h3><a name="equation_manipulation_operators">Equation Manipulation Operators</a></h3>
+<p>
+</p>
+<h4><a name="equation_manipulation_operators:_simplify_operator:_+=">Equation Manipulation Operators: <strong>Simplify</strong> operator: <strong>+=</strong></a></h4>
+<pre>
+ use Math::Algebra::Symbols;
+ 
+ ($x) = symbols(qw(x));
+ 
+  $z += ($x**8 - 1)/($x-1);</pre>
+<pre>
+ print &quot;$z\n&quot;;</pre>
+<pre>
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1</pre>
+<p>The simplify operator <strong>+=</strong> is a synonym for the
+<a href="#simplifying_equations:_simplify()">simplify()</a> method, if and only
+if, the target on the left hand side initially has a value of undef.
+Admittedly this is very strange behavior: it arises due to the shortage
+of over-rideable operators in Perl: in particular it arises due to the
+shortage of over-rideable unary operators in Perl. Never-the-less: this
+operator is useful as can be seen in the <a href="#synopsis">Synopsis</a>, and
+the desired pre-condition can always achieved by using <strong>my</strong>.</p>
+<p>
+</p>
+<h4><a name="equation_manipulation_operators:_solve_operator:_>">Equation Manipulation Operators: <strong>Solve</strong> operator: <strong>&gt;</strong></a></h4>
+<pre>
+ use Math::Algebra::Symbols;</pre>
+<pre>
+ ($x, $v, $t) = symbols(qw(x v t));</pre>
+<pre>
+ $z = ($v eq $x / $t) &gt; [qw(x in terms of v t)];</pre>
+<pre>
+ print &quot;x=$z\n&quot;;</pre>
+<pre>
+ # x=$v*$t</pre>
+<p>The solve operator <strong>&gt;</strong> is a synonym for the
+<a href="#solving_equations:_solve()">solve()</a> method.</p>
+<p>The priority of <strong>&gt;</strong> is higher than that of <strong>eq</strong>, so the brackets
+around the equation to be solved are necessary until Perl provides a
+mechanism for adjusting operator priority (cf. Algol 68).</p>
+<p>If the equation is in a single variable, the single variable
+may be named after the <strong>&gt;</strong> operator without the use of [...]:</p>
+<pre>
+ use Math::Algebra::Symbols;</pre>
+<pre>
+ my $rabbit  = 10 + 5 * $t;
+ my $fox     = 7 * $t * $t;
+ my ($a, $b) = @{($rabbit eq $fox) &gt; $t};</pre>
+<pre>
+ print &quot;$a\n&quot;;</pre>
+<pre>
+ # 1/14*sqrt(305)+5/14</pre>
+<p>If there are multiple solutions, (as in the case of polynomials), <strong>&gt;</strong>
+returns an array of symbolic expressions containing the solutions.</p>
+<p>This example was provided by Mike Schilli <a href="mailto:m@perlmeister.com.">m@perlmeister.com.</a></p>
 <p>
 </p>
 <h2><a name="functions">Functions</a></h2>
@@ -549,7 +575,35 @@ overloading.</p>
 <h3><a name="methods_for_manipulating_equations">Methods for manipulating Equations</a></h3>
 <p>
 </p>
-<h4><a name="simplifying_equations:_sub()">Simplifying equations: <strong>sub()</strong></a></h4>
+<h4><a name="simplifying_equations:_simplify()">Simplifying equations: <strong>simplify()</strong></a></h4>
+<pre>
+ use Math::Algebra::Symbols;
+ 
+ ($x) = symbols(qw(x));
+ 
+  $y  = (($x**8 - 1)/($x-1))-&gt;simplify();  # Simplify method 
+  $z +=  ($x**8 - 1)/($x-1);               # Simplify via +=</pre>
+<pre>
+ print &quot;$y\n$z\n&quot;;</pre>
+<pre>
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
+ # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1</pre>
+<p><strong>Simplify()</strong> attempts to simplify an expression. There is no general
+simplification algorithm: consequently simplifications are carried out
+on ad hoc basis. You may not even agree that the proposed simplification
+for a given expressions is indeed any simpler than the original. It is
+for these reasons that simplification has to be explicitly requested
+rather than being performed automagically.</p>
+<p>At the moment, simplifications consist of polynomial division: when the
+expression consists, in essence, of one polynomial divided by another,
+an attempt is made to perform polynomial division, the result is
+returned if there is no remainder.</p>
+<p>The <strong>+=</strong> operator may be used to simplify and assign an expression to a
+Perl variable. Perl operator overloading precludes the use of <strong>=</strong> in this
+manner.</p>
+<p>
+</p>
+<h4><a name="substituting_into_equations:_sub()">Substituting into equations: <strong>sub()</strong></a></h4>
 <pre>
  use Math::Algebra::Symbols;
  
@@ -571,11 +625,16 @@ effect as <strong>z</strong> is not present in this equation.</p>
 <p>Line <strong>#2</strong> demonstrates the resulting rational fraction that arises when
 all the variables have been replaced by constants. This package does not
 convert fractions to decimal expressions in case there is a loss of
-acuracy, however:</p>
+accuracy, however:</p>
 <pre>
  $e3 =~ /^(\d+)\/(\d+)$/;
  $result = $1/$2;</pre>
 <p>or similar will produce approximate results.</p>
+<p>At the moment only variables can be replaced by expressions. Mike
+Schilli, <a href="mailto:m@perlmeister.com,">m@perlmeister.com,</a> has proposed that substitutions for
+expressions should also be allowed, as in:</p>
+<pre>
+ $x/$y =&gt; $z</pre>
 <p>
 </p>
 <h4><a name="solving_equations:_solve()">Solving equations: <strong>solve()</strong></a></h4>
@@ -629,7 +688,7 @@ returns an array of symbolic expressions containing the solutions.</p>
  # exp($x)</pre>
 <p><strong>d()</strong> differentiates the equation on the left hand side by the named
 variable.</p>
-<p>The variable to be differentiated by may be explicitly specifed,
+<p>The variable to be differentiated by may be explicitly specified,
 either as a string or as single symbol; or it may be heuristically
 guessed as follows:</p>
 <p>If the equation to be differentiated refers to only one symbol, then
@@ -851,10 +910,10 @@ the <strong>Symbols</strong> package.
 <p></p></dl>
 <p>Thus <strong>SymbolsTerm</strong> can represent expressions like:</p>
 <pre>
-  2/3*x**2*y**-3*exp(i*pi)*sqrt(z**3) / x</pre>
+  2/3*$x**2*$y**-3*exp($i*$pi)*sqrt($z**3) / $x</pre>
 <p>but not:</p>
 <pre>
-  x + y</pre>
+  $x + $y</pre>
 <p>for which package <strong>SymbolsSum</strong> is required.</p>
 <p>
 </p>

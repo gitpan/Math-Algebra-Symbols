@@ -32,5 +32,4 @@ ok(  cos($x)->d          == -sin($x));
 ok(  cos($x)->d->d       == -cos($x));
 ok(  cos($x)->d->d->d    ==  sin($x));
 ok(  cos($x)->d->d->d->d ==  cos($x));
-exit(0);
 

@@ -35,5 +35,3 @@ ok(  abs(!($x+$y*$i)) == sqrt($x**2/($x**2+$y**2)+$y**2/($x**2+$y**2)));
 ok(  abs(($a+$i*sqrt(1-$a*$a))*($b+$i*sqrt(1-$b*$b))) == 1);
 ok(  abs($a+$i*$b)*abs($x+$i*$y) == abs(($a+$i*$b)*($x+$i*$y)));
 
-exit(0);
-
