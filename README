@@ -1,0 +1,12 @@
+Math::Algebra::Symbols - Symbolic Manipulation in Perl
+
+This package supplies a set of functions and operators to manipulate
+operator expressions algebraically. These expressions are constructed
+using the familiar Perl syntax.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself. 
+
+This is alpha code.
+
+For bug reports or suggestions send email to philiprbrenan@yahoo.com

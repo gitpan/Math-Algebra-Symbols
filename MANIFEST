@@ -1,0 +1,6 @@
+Makefile.PL
+Symbols.pm
+test.pl
+README
+MANIFEST
+META.yml                                 Module meta-data (added by MakeMaker)
