@@ -26,7 +26,7 @@
 <p>This package supplies a set of functions and operators to manipulate
 Perl expressions algebraically:</p>
 <pre>
- use symbols hyper=&gt;1;</pre>
+ use Math::Algebra::Symbols hyper=&gt;1;</pre>
 <pre>
  ($n, $x, $y) = symbols(qw(n x y));</pre>
 <pre>
@@ -42,11 +42,8 @@ Perl expressions algebraically:</p>
 <p>This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.</p>
 <p>This is alpha code. It is written in pure Perl. It uses the standard
-Perl install mechanism or the ActiveState PPM Installer.</p>
-<p>For a standard Perl install: download Math-Algebra-Symbols-1.13.tar.gz,
-from CPAN: <a href="http://cpan.uwinnipeg.ca/dist/Math-Algebra-Symbols">http://cpan.uwinnipeg.ca/dist/Math-Algebra-Symbols</a> or
-from SourceForge: <a href="https://sourceforge.net/projects/algeops/,">https://sourceforge.net/projects/algeops/,</a>
-untar and:</p>
+Perl install mechanism.</p>
+<p>Download from CPAN, untar and:</p>
 <pre>
   perl Makefile.PL
   make
@@ -54,15 +51,8 @@ untar and:</p>
   make install</pre>
 <p>If you are on Windows, use nmake, available at:</p>
 <p><a href="http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/Nmake15.exe">http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/Nmake15.exe</a></p>
-<p>For an ActiveState PPM Install: download Math-Algebra-Symbols-XXX-PPD.tar.gz,
-to a local file, untar and:</p>
-<pre>
-  ppm3.bat
-  repository add local file:://c:/downloads
-  search algebra
-  install</pre>
-<p>Use the directory into which you untarred in place of <a href="file://c:/downloads">file://c:/downloads</a></p>
-<p>I believe that we should try to capture all known Mathematics
+<p>Following the excellent work done by Steffen Müller (CPAN Author:
+SMUELLER), I believe that we should try to capture all known Mathematics
 symbolically in Perl. Indeed, can you say that you know any Mathematics
 at all if you cannot explain it in Perl?</p>
 <p>Help with this project would be appreciated.</p>

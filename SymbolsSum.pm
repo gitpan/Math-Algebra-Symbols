@@ -6,12 +6,12 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsSum;
-$VERSION = 1.13;
+$VERSION = 1.14;
 
 use Math::Algebra::SymbolsTerm;
 use IO::Handle;
 use Carp;
-use Hash::Util qw(lock_hash);
+#HashUtil use Hash::Util qw(lock_hash);
 use Scalar::Util qw(weaken);
 sub factorize($); 
 
@@ -208,13 +208,10 @@ sub multiply($$)
 
 # Exp    
       $a->Exp($a{e} ? $a{e} : $b{e})        if $a{e} xor $b{e};
-#     my $e = 0;
       my $e;
       if ($a{e} and $b{e})
        {my $s = $a{e}->add($b{e});
         $e = $s->st;                      # Check for single term
-#       $e = $e->exp2 if     $e;
-#       $a->Exp($s)   unless $e;
         $e = $e->exp2 if     defined($e); # Simplify single term if possible
         $a->Exp($s)   unless defined($e); # Reinstate Exp as sum of terms if no simplification possible 
        }
@@ -226,7 +223,6 @@ sub multiply($$)
       $a = $a->z;
       $b = $b->z;
       $a = $a->multiply($b);
-#     $a = $a->multiply($e) if $e;           # Was failing when 0
       $a = $a->multiply($e) if defined($e);
       $a or die "Bad multiply";
      
@@ -234,6 +230,7 @@ sub multiply($$)
       push @t, sigma($a)->multiply($s)->t if     $s;
      }
    }
+
 # Result  
   my $C = sigma(@t);
   $M{$A->{id}}{$B->{id}} = $C;
@@ -247,6 +244,7 @@ sub multiply($$)
 sub divide($$)
  {my ($A, $B) = @_;
 
+# Obvious cases
   $B->{id} == $zero->{id} and croak "Cannot divide by zero";
   return $zero      if $A->{id} == $zero->{id};
   return $A         if $B->{id} == $one->{id};
@@ -273,7 +271,6 @@ sub divide($$)
    }
 
 # Divide sum by sum
-
   my @t;
   for   my $aa($A->t)
    {my $a = $aa->clone;
@@ -325,6 +322,7 @@ sub sub($@)
       $Z = $Z->add($S);
      }
    }
+
 # Result
   $Z;
  }
@@ -334,8 +332,6 @@ sub sub($@)
 # divides and divisors.
 #________________________________________________________________________
 
-#sub isEqual($$)
-# {my ($A, $B) = @_;
 sub isEqual($)
  {my ($C) = @_;
 
@@ -344,7 +340,6 @@ sub isEqual($)
    {my (%c, $D, $N); $N = 0;
 
 # Most frequent divisor 
-#   for my $t($A->t, $B->t)
     for my $t($C->t)
      {my $d = $t->Divide;
       next unless $d;
@@ -355,15 +350,12 @@ sub isEqual($)
        }
      }
     last unless $N;
-#   $A = $A->multiply($D);
-#   $B = $B->multiply($D);
     $C = $C->multiply($D);
    }
 
 # Until there are no more negative powers
   for(;;)
    {my %v;
-#   for my $t($A->t, $B->t)
     for my $t($C->t)
      {for my $v($t->v)
        {my $p = $t->vp($v);
@@ -376,14 +368,10 @@ sub isEqual($)
     my $m = term()->one->clone;
     $m->vp($_, $v{$_}) for keys(%v);
     my $M = sigma($m->z);
-#   $A = $A->multiply($M); 
-#   $B = $B->multiply($M);
     $C = $C->multiply($M); 
    }
 
 # Result
-# my $z = $A->{id} == $B->{id};
-# $z;
   $C;
  }
 
@@ -406,6 +394,7 @@ sub normalizeSqrts($)
     pop  @t;
     push @s, {t=>$t, s=>$T{t}->z};        # Sqrt with simple single term
    }
+
 # Already normalized unless there are several such terms
   return $s unless scalar(@s) > 1; 
 
@@ -435,6 +424,7 @@ sub normalizeSqrts($)
      {push @t, $s->{t}->clone->Sqrt($s->{$s})->z;
      }
    }
+
 # Result
   sigma(@t);
  }
@@ -443,9 +433,6 @@ sub normalizeSqrts($)
 # Check whether one sum is equal to another after multiplying out sqrts.
 #________________________________________________________________________
 
-#sub isEqualSqrt($$)
-# {my ($A, $B) = @_;
-#  my $C = $A->subtract($B);  # Set to zero 
 sub isEqualSqrt($)
  {my ($C) = @_;
 
@@ -1099,8 +1086,8 @@ sub z($)
   $t->{z}  = $t->signature;
   $t->{id} = ++$z;
 
-  lock_hash(%{$t->{v}}) if $lock;           
-  lock_hash %$t         if $lock;         
+#HashUtil   lock_hash(%{$t->{v}}) if $lock;           
+#HashUtil   lock_hash %$t         if $lock;         
   $t;
  }
 
@@ -1111,10 +1098,10 @@ sub z($)
 
 sub lockHashes() 
  {my ($l) = @_;
-  for my $t(values %z)
-   {lock_hash(%{$t->{v}});           
-    lock_hash %$t;
-   }         
+#HashUtil   for my $t(values %z)
+#HashUtil    {lock_hash(%{$t->{v}});           
+#HashUtil     lock_hash %$t;
+#HashUtil    }         
   $lock = 1;
  }
 
@@ -1341,6 +1328,7 @@ use overload
  '/'     =>\&divide3,
  '**'    =>\&power3,
  '=='    =>\&equals3,
+ '!='    =>\&nequal3,
  'eq'    =>\&solve3, 
  '<=>'   =>\&tequals3,
  'sqrt'  =>\&sqrt3,
@@ -1436,10 +1424,15 @@ sub equals3
 
   return 1 if $c->isZero()->{id} == $zero->{id};
   return 0;
+ }
 
-# return 1 if $a->isEqual($b);      # Equals after equation solving 
-# return 1 if $a->isEqualSqrt($b);  # Equals after sqrts multiplied out
-# return 0;
+#_ Sum __________________________________________________________________
+# Not equal operator.
+#________________________________________________________________________
+
+sub nequal3
+ {my ($a, $b) = @_;
+  !equals3($a, $b);
  }
 
 #_ Sum __________________________________________________________________
@@ -1459,12 +1452,6 @@ sub tequals3
   STDOUT->flush;
 
   return 1 if equals3($a, $b); 
-# $b = newFromString("$b") unless ref($b) eq __PACKAGE__;
-# $a->{z} and $b->{z} or die "Equals using unfinalized sums";
-
-# return 1 if $a->{id} == $b->{id}; # Fast equals
-# return 1 if $a->isEqual($b);      # Equals after equation solving 
-# return 1 if $a->isEqualSqrt($b);  # Equals after sqrts multiplied out
 
   die "\nDied in ". (caller())[0] ." at ". (caller())[1]. " line ". (caller())[2]. "\n";
  }
@@ -1487,7 +1474,6 @@ sub solve3
 sub print3
  {my ($a) = @_;
   $a->{z} or die "Print of unfinalized sum";
-#print STDERR (caller())[1], " ", (caller())[2], "\n";
   $a->print();
  }
 
@@ -1969,4 +1955,682 @@ test unless caller;
 #________________________________________________________________________
 
 1;
+
+__DATA__
+
+#______________________________________________________________________
+# User guide.
+#______________________________________________________________________
+
+=head1 NAME
+
+Math::Algebra::Symbols - Symbolic Algebra using Perl
+
+=head1 SYNOPSIS
+
+ use Maths::Algebra::Symbols hyper=>1;
+
+ ($n, $x, $y) = symbols(qw(n x y));
+
+ $a = sin($x)**2 + cos($x)**2; 
+ $b = ($x**8-1) / ($x-1);
+ $c = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x));
+ $d = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+
+ print "$a\n$b\n$c\n$d\n";
+
+ # 1                                        
+ # 1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
+ # $n**4                                   
+ # 1                                        
+
+=head1 DESCRIPTION
+
+This package supplies a set of functions and operators to manipulate
+operator expressions algebraically  using the familiar Perl syntax.
+
+These expressions are constructed
+from L</Symbols>, L</Operators>, and L</Functions>, and processed via
+L</Methods>.  For examples, see: L</Examples>.
+
+=head2 Symbols
+
+Symbols are created with the exported B<symbols()> constructor routine:
+
+ use Maths::Algebra::Symbols;
+
+ my ($x, $y, $i, $o, $pi) = symbols(qw(x y i 1 pi));
+
+ print "$x $y $i $o\n";
+
+ # $x $y $i 1
+
+The B<symbols()> routine constructs references to symbolic variables and
+symbolic constants from a list of names and integer constants.
+
+The special symbol B<i> is recognized as the square root of B<-1>.
+
+The special symbol B<pi> is recognized as the smallest positive real
+that satisfies:
+
+ use Maths::Algebra::Symbols;
+
+ ($i, $pi) = symbols(qw(i pi));
+
+ print exp($i*$pi), "\n";
+
+ # -1
+
+=head3 Constructor Routine Name
+
+If you wish to use a different name for the constructor routine, say
+B<S>:
+
+ use Maths::Algebra::Symbols symbols=>'S';
+
+ my ($x, $y, $i, $o) = S(qw(x y i 1));
+
+ print "$x $y $i $o\n";
+
+ # $x $y $i 1
+
+=head3 Constructing Expressions with Big Integers
+
+If you wish to use Maths::Algebra::Symbols constructed with big integers from L<Math::BigInt>:
+
+ use Maths::Algebra::Symbols BigInt=>1;
+
+ my $z = symbols('1234567890987654321/1234567890987654321');
+
+ print "$z\n";
+
+ # 1
+
+=head2 Operators
+
+L</Symbols> can be combined with L</Operators> to create symbolic expressions:
+
+=head3 Arithmetic operators
+
+
+=head4 Arithmetic Operators: B<+> B<-> B<*> B</> B<**> 
+            
+ use Maths::Algebra::Symbols;
+
+ ($x, $y) = symbols(qw(x y));
+
+ $z = ($x**2-$y**2)/($x-$y);
+
+ print "$z\n";
+
+ # $x+$y
+
+The auto assign versions of these operators: B<+=> B<-=> B<*=> B</=> all
+work courtesy of Perl Auto-Magical Operator Generation.
+
+=head4 Square root Operator: B<sqrt>       
+
+ use Maths::Algebra::Symbols;
+
+ $x = symbols(qw(x));
+
+ $z = sqrt(-$x**2);
+
+ print "$z\n";
+
+ # $i*$x
+
+=head4 Exponential Operator: B<exp>       
+
+ use Maths::Algebra::Symbols;
+
+ $x = symbols(qw(x));
+
+ $z = exp($x)->d($x);
+
+ print "$z\n";
+
+ # exp($x)
+
+=head4 Logarithm Operator: B<log>       
+
+ use Maths::Algebra::Symbols;
+
+ $x = symbols(qw(x));
+
+ $z = log(exp($x)*exp($x));
+
+ print "$z\n";
+
+ # 2*$x
+
+=head4 Sine and Cosine Operators: B<sin> and B<cos>       
+
+ use Maths::Algebra::Symbols;
+
+ $x = symbols(qw(x));
+
+ $z = sin($x)**2 + cos($x)**2;
+
+ print "$z\n";
+
+ # 1
+
+=head3 Relational operators                                   
+
+=head4 Relational operators: B<==>, B<!=> 
+
+ use Maths::Algebra::Symbols;
+
+ ($x, $y) = symbols(qw(x y));
+
+ $z = ($x**2-$y**2)/($x+$y) == $x - $y;
+
+ print "$z\n";
+
+ # 1
+
+The relational equality operator B<==> compares two symbolic expressions
+and returns TRUE(1) or FALSE(0) accordingly. B<!=> produces the opposite
+result.
+
+=head4 Relational operator: B<eq> 
+
+ use Maths::Algebra::Symbols;
+
+ ($x, $v, $t) = symbols(qw(x v t));
+
+ $z = ($v eq $x / $t)->solve(qw(x in terms of v t));
+
+ print "x=$z\n";
+
+ # x=$v*$t
+
+The relational operator B<eq> is in fact a synonym for the minus B<->
+operator, with the expectation that later on the L<solve()|/Solving equations>
+function will be used to simplify and rearrange the equation.
+
+=head3 Complex operators
+
+=head4 Complex operators: the B<dot> operator: B<^>       
+
+ use Maths::Algebra::Symbols;
+
+ ($a, $b, $i) = symbols(qw(a b i));
+
+ $z = ($a+$i*$b)^($a-$i*$b);
+
+ print "$z\n";
+
+ # $a**2-$b**2
+
+Note the use of brackets.  The B<^> operator has low priority.
+
+The B<^> operator treats its left hand and right hand arguments as
+complex numbers, which in turn are regarded as two dimensional vectors
+to which the vector dot product is applied.
+
+=head4 Complex operators: the B<cross> operator: B<x>       
+
+ use Maths::Algebra::Symbols;
+
+ ($x, $i) = symbols(qw(x i));
+
+ $z = $i*$x x $x;
+
+ print "$z\n";
+
+ # $x**2
+
+The B<x> operator treats its left hand and right hand arguments as
+complex numbers, which in turn are regarded as two dimensional vectors
+defining the sides of a parallelogram. The B<x> operator returns the
+area of this parallelogram.
+
+Note the space before the B<x>, otherwise Perl is unable to disambiguate
+the expression correctly.
+
+=head4 Complex operators: the B<conjugate> operator: B<~>       
+
+ use Maths::Algebra::Symbols;
+
+ ($x, $y, $i) = symbols(qw(x y i));
+
+ $z = $x+$i*$y;
+
+ print ~$z, "\n";
+
+ # $x-$i*$y
+
+The B<~> operator returns the complex conjugate of its right hand side.
+
+=head4 Complex operators: the B<modulus> operator: B<abs>       
+
+ use Maths::Algebra::Symbols;
+
+ ($x, $i) = symbols(qw(x i));
+
+ $z = abs($x+$i*$x);
+
+ print "$z\n";
+
+ # sqrt(2)*$x
+
+The B<abs> operator returns the modulus (length) of its right hand side.
+
+=head4 Complex operators: the B<unit> operator: B<!>       
+
+ use Maths::Algebra::Symbols;
+
+ $i = symbols(qw(i));
+
+ $z = !($i+1);
+
+ print "$z\n";
+
+ # $i*sqrt(1/2)+sqrt(1/2)
+
+The B<!> operator returns a complex number of unit length pointing in
+the same direction as its right hand side.
+
+=head2 Functions
+
+Perl operator overloading is very useful for producing compact
+representations of algebraic expressions. Unfortunately there are only a
+small number of operators that Perl allows to be overloaded. The
+following functions are used to provide capabilities not easily expressed
+via Perl operator overloading.
+
+These functions may either be called as methods from symbols constructed
+by the L</Symbols> construction routine, or they may be exported into
+the user's namespace as described in L</EXPORT>.
+
+=head3 Trigonometric and Hyperbolic functions
+
+=head4 Trigonometric functions
+
+ use Maths::Algebra::Symbols trig=>1;
+
+ ($x, $y) = symbols(qw(x y));
+
+ $z = sin($x)**2 == (1-cos(2*$x))/2;
+
+ print "$z\n";
+
+ # 1
+
+The trigonometric functions B<cos>, B<sin>, B<tan>, B<sec>, B<csc>,
+B<cot> are available, either as exports to the caller's name space, or
+as methods.
+
+=head4 Hyperbolic functions
+
+ use Maths::Algebra::Symbols hyper=>1;
+
+ ($x, $y) = symbols(qw(x y));
+
+ $z = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+
+ print "$z\n";
+
+ # 1
+
+The hyperbolic functions B<cosh>, B<sinh>, B<tanh>, B<sech>, B<csch>,
+B<coth> are available, either as exports to the caller's name space, or
+as methods.
+
+=head3 Complex functions
+
+=head4 Complex functions: B<re> and B<im>       
+
+ use Maths::Algebra::Symbols complex=>1;
+
+ ($x, $i) = symbols(qw(x i));
+
+ $R = re($i*$x);
+ $I = im($i*$x);
+
+ print "$R $I\n";
+
+ # 0 $x
+
+The B<re> and B<im> functions return an expression which represents the
+real and imaginary parts of the expression, assuming that symbolic
+variables represent real numbers.
+
+=head4 Complex functions: B<dot> and B<cross>       
+
+ use Maths::Algebra::Symbols complex=>1;
+
+ $i = symbols(qw(i));
+
+ $c = cross($i+1, $i-1);
+ $d = dot  ($i+1, $i-1);
+
+ print "$c $d\n";
+
+ # 2 0
+
+The B<dot> and B<cross> operators are available as functions, either as
+exports to the caller's name space, or as methods.
+
+=head4 Complex functions: B<conjugate>, B<modulus> and B<unit>       
+
+ use Maths::Algebra::Symbols complex=>1;
+
+ $i = symbols(qw(i));
+
+ $x = unit($i+1);
+ $y = modulus($i+1);
+ $z = conjugate($i+1);
+
+ print "$x\n$y\n$z\n";
+
+ # $i*sqrt(1/2)+sqrt(1/2)
+ # sqrt(2)
+ # 1-$i
+
+The B<conjugate>, B<abs> and B<unit> operators are available as
+functions: B<conjugate>, B<modulus> and B<unit>, either as exports to
+the caller's name space, or as methods. The confusion over the naming of:
+the B<abs> operator being the same as the B<modulus> complex function;
+arises over the limited set of Perl operator names available for
+overloading.
+
+
+=head2 Methods
+
+=head3 Methods for manipulating Equations             
+
+=head4 Simplifying equations: B<sub()>
+
+ use Maths::Algebra::Symbols;
+ 
+ ($x, $y) = symbols(qw(x y));
+ 
+ $e  = 1+$x+$x**2/2+$x**3/6+$x**4/24+$x**5/120;
+
+ $e2 = $e->sub(x=>$y**2, z=>2);   #1
+ $e3 = $e->sub(x=>1);             #2
+
+ print "$e2\n\n$e3\n\n";
+
+ # 1+$y**2+1/2*$y**4+1/6*$y**6+1/24*$y**8+1/120*$y**10
+
+ # 163/60
+
+The B<sub()> function example on line B<#1> demonstrates replacing
+variables with expressions. The replacement specified for B<z> has no
+effect as B<z> is not present in this equation.
+
+Line B<#2> demonstrates the resulting rational fraction that arises when
+all the variables have been replaced by constants. This package does not
+convert fractions to decimal expressions in case there is a loss of
+acuracy, however:
+
+ $e3 =~ /^(\d+)\/(\d+)$/;
+ $result = $1/$2;
+
+or similar will produce approximate results.
+
+=head4 Solving equations: B<solve()>
+
+ use Maths::Algebra::Symbols;
+
+ ($x, $v, $t) = symbols(qw(x v t));
+
+ $z = ($v eq $x / $t)->solve(qw(x in terms of v t)); #1
+
+ print "x=$z\n";
+
+ # x=$v*$t
+
+B<solve()> assumes that the equation on the left hand side is equal to
+zero, applies various simplifications, then attempts to rearrange the
+equation to obtain an equation for the first variable in the parameter
+list assuming that the other terms mentioned in the parameter list are
+known constants. There may of course be other unknown free variables in
+the equation to be solved: the proposed solution is automatically tested
+against the original equation to check that the proposed solution
+removes these variables, an error is reported via B<die()> if it does not.
+
+=head3 Methods for performing Calculus
+
+=head4 Differentiation: B<d()>
+
+ use Maths::Algebra::Symbols;
+
+ ($x, $i) = S(qw(x i));
+
+ $z = exp($x)->d->d('x')->d($x)->d();
+
+ print "$z\n";
+
+ # exp($x)
+
+B<d()> differentiates the equation on the left hand side by the named
+variable.
+
+The variable to be differentiated by may be explicitly specifed,
+either as a string or as single symbol; or it may be heuristically
+guessed as follows:
+
+If the equation to be differentiated refers to only one symbol, then
+that symbol is used. If several symbols are present in the equation, but
+only one of B<t>, B<x>, B<y>, B<z> is present, then that variable is
+used in honor of Newton, Leibnitz, Cauchy.
+
+=head2 Examples
+
+=head3 Example Expressions
+
+ use Maths::Algebra::Symbols;
+
+ ($a, $b, $x, $y, $i) = symbols(qw(a b x y i));
+
+   print $i x 1, "\n";              # Cross product
+ # 1
+
+   print $i^1,   "\n";              # Dot product - different vectors
+ # 0
+
+   print $i^$i,  "\n";              # Dot product - same vector
+ # 1
+
+   print abs $i, "\n";              # Length of unit vector
+ # 1
+
+   print ~($a+$b) == ~$a+~$b, "\n"; # Conjugation is distributive
+ # 1                                  over addition
+
+   print ~($a*$b) == ~$a*~$b, "\n"; # Conjugation is distributive
+ # 1                                  over multiplication
+
+   print ~($a**2) == (~$a)**2,"\n"; # Conjugation is distributive
+ # 1                                  over power
+
+   print  abs(!($x+$y*$i))==1,"\n"; # Length of unit vector
+ # 1
+
+   print                            # Length of product = product of lengths
+         abs($a+$i*$b)*abs($x+$i*$y) ==
+        abs(($a+$i*$b)*   ($x+$i*$y)), "\n";
+ # 1  
+
+
+=head3 Example of Equation Solving: the focii of a hyperbola:
+
+ use Maths::Algebra::Symbols;
+ ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
+
+ print
+ "Hyperbola: Constant difference between distances from focii to locus of y=1/x",
+ "\n  Assume by symmetry the focii are on ",
+ "\n    the line y=x:                     ",  $f1 = $x + $i * $x,
+ "\n  and equidistant from the origin:    ",  $f2 = -$f1,
+ "\n  Choose a convenient point on y=1/x: ",  $a = $o+$i,
+ "\n        and a general point on y=1/x: ",  $b = $y+$i/$y,
+ "\n  Difference in distances from focii",
+ "\n    From convenient point:            ",  $A = abs($a - $f2) - abs($a - $f1),  
+ "\n    From general point:               ",  $B = abs($b - $f2) + abs($b - $f1),
+ "\n\n  Solving for x we get:            x=", ($A eq $B)->solve(qw(x)),
+ "\n                         (should be: sqrt(2))",                        
+ "\n  Which is indeed constant, as was to be demonstrated\n";
+
+This example demonstrates the power of symbolic processing by finding the
+focii of the curve B<y=1/x>, and incidentally, demonstrating that this curve
+is a hyperbola.
+
+=head3 Further Examples
+
+ use Maths::Algebra::Symbols;
+
+ $x = symbols(qw(x));
+
+ $x->test();
+
+The B<test()> method performs many tests which are useful in validating this package and as
+examples of the capabilities of this package.  These tests may also be run as:
+
+ perl symbols.pm
+ 
+
+=head1 EXPORT
+
+ use Maths::Algebra::Symbols symbols=>'S', BigInt=>0, trig=>1 hyper=>1,
+   complex=>1;
+
+=over
+
+=item BigInt=>0
+
+The default - use regular perl numbers.
+
+=item BigInt=>1
+
+Use Perl L<Math::BigInt> to represent numbers.  
+
+=item symbols=>'name'
+
+Create a routine with this name in the caller's namespace to construct
+new symbols. The default is B<symbols>.
+
+=item trig=>0
+
+The default, do not export trigonometric functions. 
+
+=item trig=>1
+
+Export trigonometric functions: B<tan>, B<sec>, B<csc>, B<cot> to the
+caller's namespace. B<sin>, B<cos> are created by default by overloading
+the existing Perl B<sin> and B<cos> operators.
+
+=item B<trigonometric>
+
+Alias of B<trig>
+
+=item hyperbolic=>0
+
+The default, do not export hyperbolic functions. 
+
+=item hyper=>1
+
+Export hyperbolic functions: B<sinh>, B<cosh>, B<tanh>, B<sech>,
+B<csch>, B<coth> to the caller's namespace.
+
+=item B<hyperbolic>
+
+Alias of B<hyper>
+
+=item complex=>0
+
+The default, do not export complex functions         
+
+=item complex=>1
+
+Export complex functions: B<conjugate>, B<cross>, B<dot>, B<im>,
+B<modulus>, B<re>, B<unit> to the caller's namespace.
+
+=back
+
+=head1 PACKAGES
+
+The Symbols packages manipulate a sum of products representation of an
+algebraic equation. The B<Symbols> package is the user interface to the
+functionality supplied by the B<SymbolsSum> and B<SymbolsTerm> packages.
+
+=head2 Math::Algebra::SymbolsTerm
+
+B<SymbolsTerm> represents a product term. A product term consists of the
+number B<1>, optionally multiplied by:
+
+=over
+
+=item Variables
+
+any number of variables raised to integer powers,
+
+=item Coefficient
+
+An integer coefficient optionally divided by a positive integer divisor,
+both represented as BigInts if necessary. 
+
+=item Sqrt
+
+The sqrt of of any symbolic expression representable by the B<Symbols>
+package, including minus one: represented as B<i>.
+
+=item Reciprocal
+
+The multiplicative inverse of any symbolic expression representable by
+the B<Symbols> package: i.e. a B<SymbolsTerm> may be divided by any
+symbolic expression representable by the B<Symbols> package.
+
+=item Exp
+
+The number B<e> raised to the power of any symbolic expression
+representable by the B<Symbols> package.
+
+=item Log
+
+The logarithm to base B<e> of any symbolic expression representable by
+the B<Symbols> package.
+
+=back
+
+Thus B<SymbolsTerm> can represent expressions like:
+
+  2/3*x**2*y**-3*exp(i*pi)*sqrt(z**3) / x
+
+but not:
+
+  x + y
+
+for which package B<SymbolsSum> is required. 
+
+
+=head2 Math::Algebra::SymbolsSum
+
+B<SymbolsSum> represents a sum of product terms supplied by
+B<SymbolsTerm> and thus behaves as a polynomial. Operations such as
+equation solving and differentiation are applied at this level.
+
+The main benefit of programming B<SymbolsTerm> and B<SymbolsSum> as two
+separate but related packages is Object Oriented Polymorphism. I.e. both
+packages need to multiply items together: each package has its own B<multiply> method,
+with Perl method lookup selecting the appropriate one as required. 
+
+=head2 Math::Algebra::Symbols
+
+Packaging the user functionality separately in package B<Symbols> allows
+the internal functions to be conveniently hidden from user scripts.
+
+
+=head1 AUTHOR
+
+Philip R Brenan at B<philiprbrenan@yahoo.com>
+
+=cut
+
+
 

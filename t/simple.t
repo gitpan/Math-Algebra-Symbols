@@ -6,12 +6,14 @@
 #______________________________________________________________________
 
 use Math::Algebra::Symbols;
-use Test::More tests => 32;
+use Test::More tests => 34;
 
 ($a, $b, $x, $i, $zero, $one, $two) = symbols(qw(2 3 x i 0 1 2));
 
 ok(  symbols(0)          == $zero);
+ok(  symbols(0)          != $one); 
 ok(  symbols(1)          == $one);
+ok(  symbols(1)          != $zero);
 ok(  $a                  == $two);
 ok(  $b                  == 3);
 ok(  $a+$a               == 4);

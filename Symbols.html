@@ -40,7 +40,7 @@
 			<li><a href="#relational_operators">Relational operators</a></li>
 			<ul>
 
-				<li><a href="#relational_operator:_==">Relational operator: <strong>==</strong></a></li>
+				<li><a href="#relational_operators:_==,_!=">Relational operators: <strong>==</strong>, <strong>!=</strong></a></li>
 				<li><a href="#relational_operator:_eq">Relational operator: <strong>eq</strong></a></li>
 			</ul>
 
@@ -105,6 +105,14 @@
 	</ul>
 
 	<li><a href="#export">EXPORT</a></li>
+	<li><a href="#packages">PACKAGES</a></li>
+	<ul>
+
+		<li><a href="#math::algebra::symbolsterm">Math::Algebra::SymbolsTerm</a></li>
+		<li><a href="#math::algebra::symbolssum">Math::Algebra::SymbolsSum</a></li>
+		<li><a href="#math::algebra::symbols">Math::Algebra::Symbols</a></li>
+	</ul>
+
 	<li><a href="#author">AUTHOR</a></li>
 </ul>
 <!-- INDEX END -->
@@ -119,7 +127,7 @@
 <hr />
 <h1><a name="synopsis">SYNOPSIS</a></h1>
 <pre>
- use symbols hyper=&gt;1;</pre>
+ use Maths::Algebra::Symbols hyper=&gt;1;</pre>
 <pre>
  ($n, $x, $y) = symbols(qw(n x y));</pre>
 <pre>
@@ -148,7 +156,7 @@ from <a href="#symbols">Symbols</a>, <a href="#operators">Operators</a>, and <a 
 <h2><a name="symbols">Symbols</a></h2>
 <p>Symbols are created with the exported <strong>symbols()</strong> constructor routine:</p>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  my ($x, $y, $i, $o, $pi) = symbols(qw(x y i 1 pi));</pre>
 <pre>
@@ -161,7 +169,7 @@ symbolic constants from a list of names and integer constants.</p>
 <p>The special symbol <strong>pi</strong> is recognized as the smallest positive real
 that satisfies:</p>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($i, $pi) = symbols(qw(i pi));</pre>
 <pre>
@@ -174,7 +182,7 @@ that satisfies:</p>
 <p>If you wish to use a different name for the constructor routine, say
 <strong>S</strong>:</p>
 <pre>
- use symbols symbols=&gt;'S';</pre>
+ use Maths::Algebra::Symbols symbols=&gt;'S';</pre>
 <pre>
  my ($x, $y, $i, $o) = S(qw(x y i 1));</pre>
 <pre>
@@ -184,9 +192,9 @@ that satisfies:</p>
 <p>
 </p>
 <h3><a name="constructing_expressions_with_big_integers">Constructing Expressions with Big Integers</a></h3>
-<p>If you wish to use symbols constructed with big integers from <a href="/Math/BigInt.html">the Math::BigInt manpage</a>:</p>
+<p>If you wish to use Maths::Algebra::Symbols constructed with big integers from <a href="/Math/BigInt.html">the Math::BigInt manpage</a>:</p>
 <pre>
- use symbols BigInt=&gt;1;</pre>
+ use Maths::Algebra::Symbols BigInt=&gt;1;</pre>
 <pre>
  my $z = symbols('1234567890987654321/1234567890987654321');</pre>
 <pre>
@@ -205,7 +213,7 @@ that satisfies:</p>
 <h4><a name="arithmetic_operators:_+__*_/_**">Arithmetic Operators: <strong>+</strong> <strong>-</strong> <strong>*</strong> <strong>/</strong> <strong>**</strong></a></h4>
 <pre>
 
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($x, $y) = symbols(qw(x y));</pre>
 <pre>
@@ -220,7 +228,7 @@ work courtesy of Perl Auto-Magical Operator Generation.</p>
 </p>
 <h4><a name="square_root_operator:_sqrt">Square root Operator: <strong>sqrt</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  $x = symbols(qw(x));</pre>
 <pre>
@@ -233,7 +241,7 @@ work courtesy of Perl Auto-Magical Operator Generation.</p>
 </p>
 <h4><a name="exponential_operator:_exp">Exponential Operator: <strong>exp</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  $x = symbols(qw(x));</pre>
 <pre>
@@ -246,7 +254,7 @@ work courtesy of Perl Auto-Magical Operator Generation.</p>
 </p>
 <h4><a name="logarithm_operator:_log">Logarithm Operator: <strong>log</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  $x = symbols(qw(x));</pre>
 <pre>
@@ -259,7 +267,7 @@ work courtesy of Perl Auto-Magical Operator Generation.</p>
 </p>
 <h4><a name="sine_and_cosine_operators:_sin_and_cos">Sine and Cosine Operators: <strong>sin</strong> and <strong>cos</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  $x = symbols(qw(x));</pre>
 <pre>
@@ -273,9 +281,9 @@ work courtesy of Perl Auto-Magical Operator Generation.</p>
 <h3><a name="relational_operators">Relational operators</a></h3>
 <p>
 </p>
-<h4><a name="relational_operator:_==">Relational operator: <strong>==</strong></a></h4>
+<h4><a name="relational_operators:_==,_!=">Relational operators: <strong>==</strong>, <strong>!=</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($x, $y) = symbols(qw(x y));</pre>
 <pre>
@@ -285,12 +293,13 @@ work courtesy of Perl Auto-Magical Operator Generation.</p>
 <pre>
  # 1</pre>
 <p>The relational equality operator <strong>==</strong> compares two symbolic expressions
-and returns <code>TRUE(1)</code> or <code>FALSE(0)</code> accordingly.</p>
+and returns <code>TRUE(1)</code> or <code>FALSE(0)</code> accordingly. <strong>!=</strong> produces the opposite
+result.</p>
 <p>
 </p>
 <h4><a name="relational_operator:_eq">Relational operator: <strong>eq</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($x, $v, $t) = symbols(qw(x v t));</pre>
 <pre>
@@ -309,7 +318,7 @@ function will be used to simplify and rearrange the equation.</p>
 </p>
 <h4><a name="complex_operators:_the_dot_operator:_^">Complex operators: the <strong>dot</strong> operator: <strong>^</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($a, $b, $i) = symbols(qw(a b i));</pre>
 <pre>
@@ -326,7 +335,7 @@ to which the vector dot product is applied.</p>
 </p>
 <h4><a name="complex_operators:_the_cross_operator:_x">Complex operators: the <strong>cross</strong> operator: <strong>x</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($x, $i) = symbols(qw(x i));</pre>
 <pre>
@@ -345,7 +354,7 @@ the expression correctly.</p>
 </p>
 <h4><a name="complex_operators:_the_conjugate_operator:_~">Complex operators: the <strong>conjugate</strong> operator: <strong>~</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($x, $y, $i) = symbols(qw(x y i));</pre>
 <pre>
@@ -359,7 +368,7 @@ the expression correctly.</p>
 </p>
 <h4><a name="complex_operators:_the_modulus_operator:_abs">Complex operators: the <strong>modulus</strong> operator: <strong>abs</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($x, $i) = symbols(qw(x i));</pre>
 <pre>
@@ -373,7 +382,7 @@ the expression correctly.</p>
 </p>
 <h4><a name="complex_operators:_the_unit_operator:_!">Complex operators: the <strong>unit</strong> operator: <strong>!</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  $i = symbols(qw(i));</pre>
 <pre>
@@ -402,7 +411,7 @@ the user's namespace as described in <a href="#export">EXPORT</a>.</p>
 </p>
 <h4><a name="trigonometric_functions">Trigonometric functions</a></h4>
 <pre>
- use symbols trig=&gt;1;</pre>
+ use Maths::Algebra::Symbols trig=&gt;1;</pre>
 <pre>
  ($x, $y) = symbols(qw(x y));</pre>
 <pre>
@@ -418,7 +427,7 @@ as methods.</p>
 </p>
 <h4><a name="hyperbolic_functions">Hyperbolic functions</a></h4>
 <pre>
- use symbols hyper=&gt;1;</pre>
+ use Maths::Algebra::Symbols hyper=&gt;1;</pre>
 <pre>
  ($x, $y) = symbols(qw(x y));</pre>
 <pre>
@@ -437,7 +446,7 @@ as methods.</p>
 </p>
 <h4><a name="complex_functions:_re_and_im">Complex functions: <strong>re</strong> and <strong>im</strong></a></h4>
 <pre>
- use symbols complex=&gt;1;</pre>
+ use Maths::Algebra::Symbols complex=&gt;1;</pre>
 <pre>
  ($x, $i) = symbols(qw(x i));</pre>
 <pre>
@@ -454,7 +463,7 @@ variables represent real numbers.</p>
 </p>
 <h4><a name="complex_functions:_dot_and_cross">Complex functions: <strong>dot</strong> and <strong>cross</strong></a></h4>
 <pre>
- use symbols complex=&gt;1;</pre>
+ use Maths::Algebra::Symbols complex=&gt;1;</pre>
 <pre>
  $i = symbols(qw(i));</pre>
 <pre>
@@ -470,7 +479,7 @@ exports to the caller's name space, or as methods.</p>
 </p>
 <h4><a name="complex_functions:_conjugate,_modulus_and_unit">Complex functions: <strong>conjugate</strong>, <strong>modulus</strong> and <strong>unit</strong></a></h4>
 <pre>
- use symbols complex=&gt;1;</pre>
+ use Maths::Algebra::Symbols complex=&gt;1;</pre>
 <pre>
  $i = symbols(qw(i));</pre>
 <pre>
@@ -499,7 +508,7 @@ overloading.</p>
 </p>
 <h4><a name="simplifying_equations:_sub()">Simplifying equations: <strong>sub()</strong></a></h4>
 <pre>
- use symbols;
+ use Maths::Algebra::Symbols;
  
  ($x, $y) = symbols(qw(x y));
  
@@ -528,7 +537,7 @@ acuracy, however:</p>
 </p>
 <h4><a name="solving_equations:_solve()">Solving equations: <strong>solve()</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($x, $v, $t) = symbols(qw(x v t));</pre>
 <pre>
@@ -552,7 +561,7 @@ removes these variables, an error is reported via <strong>die()</strong> if it d
 </p>
 <h4><a name="differentiation:_d()">Differentiation: <strong>d()</strong></a></h4>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($x, $i) = S(qw(x i));</pre>
 <pre>
@@ -577,7 +586,7 @@ used in honor of Newton, Leibnitz, Cauchy.</p>
 </p>
 <h3><a name="example_expressions">Example Expressions</a></h3>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  ($a, $b, $x, $y, $i) = symbols(qw(a b x y i));</pre>
 <pre>
@@ -613,7 +622,7 @@ used in honor of Newton, Leibnitz, Cauchy.</p>
 </p>
 <h3><a name="example_of_equation_solving:_the_focii_of_a_hyperbola:">Example of Equation Solving: the focii of a hyperbola:</a></h3>
 <pre>
- use symbols;
+ use Maths::Algebra::Symbols;
  ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));</pre>
 <pre>
  print
@@ -636,7 +645,7 @@ is a hyperbola.</p>
 </p>
 <h3><a name="further_examples">Further Examples</a></h3>
 <pre>
- use symbols;</pre>
+ use Maths::Algebra::Symbols;</pre>
 <pre>
  $x = symbols(qw(x));</pre>
 <pre>
@@ -724,6 +733,83 @@ Export complex functions: <strong>conjugate</strong>, <strong>cross</strong>, <s
 <strong>modulus</strong>, <strong>re</strong>, <strong>unit</strong> to the caller's namespace.
 </dd>
 <p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="packages">PACKAGES</a></h1>
+<p>The Symbols packages manipulate a sum of products representation of an
+algebraic equation. The <strong>Symbols</strong> package is the user interface to the
+functionality supplied by the <strong>SymbolsSum</strong> and <strong>SymbolsTerm</strong> packages.</p>
+<p>
+</p>
+<h2><a name="math::algebra::symbolsterm">Math::Algebra::SymbolsTerm</a></h2>
+<p><strong>SymbolsTerm</strong> represents a product term. A product term consists of the
+number <strong>1</strong>, optionally multiplied by:</p>
+<dl>
+<dt><strong><a name="item_variables">Variables</a></strong><br />
+</dt>
+<dd>
+any number of variables raised to integer powers,
+</dd>
+<p></p>
+<dt><strong><a name="item_coefficient">Coefficient</a></strong><br />
+</dt>
+<dd>
+An integer coefficient optionally divided by a positive integer divisor,
+both represented as BigInts if necessary.
+</dd>
+<p></p>
+<dt><strong><a name="item_sqrt">Sqrt</a></strong><br />
+</dt>
+<dd>
+The sqrt of of any symbolic expression representable by the <strong>Symbols</strong>
+package, including minus one: represented as <strong>i</strong>.
+</dd>
+<p></p>
+<dt><strong><a name="item_reciprocal">Reciprocal</a></strong><br />
+</dt>
+<dd>
+The multiplicative inverse of any symbolic expression representable by
+the <strong>Symbols</strong> package: i.e. a <strong>SymbolsTerm</strong> may be divided by any
+symbolic expression representable by the <strong>Symbols</strong> package.
+</dd>
+<p></p>
+<dt><strong><a name="item_exp">Exp</a></strong><br />
+</dt>
+<dd>
+The number <strong>e</strong> raised to the power of any symbolic expression
+representable by the <strong>Symbols</strong> package.
+</dd>
+<p></p>
+<dt><strong><a name="item_log">Log</a></strong><br />
+</dt>
+<dd>
+The logarithm to base <strong>e</strong> of any symbolic expression representable by
+the <strong>Symbols</strong> package.
+</dd>
+<p></p></dl>
+<p>Thus <strong>SymbolsTerm</strong> can represent expressions like:</p>
+<pre>
+  2/3*x**2*y**-3*exp(i*pi)*sqrt(z**3) / x</pre>
+<p>but not:</p>
+<pre>
+  x + y</pre>
+<p>for which package <strong>SymbolsSum</strong> is required.</p>
+<p>
+</p>
+<h2><a name="math::algebra::symbolssum">Math::Algebra::SymbolsSum</a></h2>
+<p><strong>SymbolsSum</strong> represents a sum of product terms supplied by
+<strong>SymbolsTerm</strong> and thus behaves as a polynomial. Operations such as
+equation solving and differentiation are applied at this level.</p>
+<p>The main benefit of programming <strong>SymbolsTerm</strong> and <strong>SymbolsSum</strong> as two
+separate but related packages is Object Oriented Polymorphism. I.e. both
+packages need to multiply items together: each package has its own <strong>multiply</strong> method,
+with Perl method lookup selecting the appropriate one as required.</p>
+<p>
+</p>
+<h2><a name="math::algebra::symbols">Math::Algebra::Symbols</a></h2>
+<p>Packaging the user functionality separately in package <strong>Symbols</strong> allows
+the internal functions to be conveniently hidden from user scripts.</p>
 <p>
 </p>
 <hr />
