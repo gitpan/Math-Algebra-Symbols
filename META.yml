@@ -1,14 +1,10 @@
 --- #YAML:1.0
 name:     Math-Algebra-Symbols
-version:  1.18
-abstract: Symbolic Manipulation using Perl
+version:  1.20
+abstract: Symbolic Algebra in Pure Perl
 license:  perl
 distribution_type: module
 requires:
-  Math::BigInt: 0
-  Carp:         0
-  Scalar::Util: 0
-  IO::Handle:   0
 recommends:
 build_requires:
 dynamic_config: 0

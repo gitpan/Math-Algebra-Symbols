@@ -1,31 +1,49 @@
 #!perl -w
-#_ Sum __________________________________________________________________
-# Symbolic algebra: sums.
-# Perl License.
-# PhilipRBrenan@yahoo.com, 2004.
-#________________________________________________________________________
 
-package Math::Algebra::SymbolsSum;
-$VERSION = 1.18;
+=head1 SymbolsSums
 
-use Math::Algebra::SymbolsTerm;
+Symbolic Algebra using Pure Perl: sums.
+
+See user manual L</NAME>.
+
+Operations on sums of terms.
+
+PhilipRBrenan@yahoo.com, 2004, Perl License.
+
+=cut
+
+
+package Math::Algebra::Symbols::Sum;
+$VERSION=1.20;
+use Math::Algebra::Symbols::Term;
 use IO::Handle;
 use Carp;
 #HashUtil use Hash::Util qw(lock_hash);
 use Scalar::Util qw(weaken);
 sub factorize($); 
 
-#_ Sum __________________________________________________________________
-# Constructer
-#________________________________________________________________________
+
+=head2 Constructors
+
+
+=head3 new
+
+Constructor
+
+=cut
+
 
 sub new
  {bless {t=>{}};
  }
 
-#_ Sum __________________________________________________________________
-# New from String
-#________________________________________________________________________
+
+=head3 newFromString
+
+New from String
+
+=cut
+
 
 sub newFromString($)
  {my ($a) = @_;
@@ -36,9 +54,13 @@ sub newFromString($)
   sigma(@t);
  }
 
-#_ Sum __________________________________________________________________
-# New from Strings
-#________________________________________________________________________
+
+=head3 n
+
+New from Strings
+
+=cut
+
 
 sub n(@)
  {return $zero unless @_;
@@ -47,43 +69,13 @@ sub n(@)
   $a[0];
  }
 
-#_ Sum __________________________________________________________________
-# Confirm type
-#________________________________________________________________________
 
-sub isSum($) {1}; 
+=head3 sigma
 
-#_ Sum __________________________________________________________________
-# Get list of terms from existing sum
-#________________________________________________________________________
+Create a sum from a list of terms.
 
-sub t($)
- {my ($a) = @_;
-  (map {$a->{t}{$_}} sort(keys(%{$a->{t}})));
- }
+=cut
 
-#_ Sum __________________________________________________________________
-# Count terms in sum              
-#________________________________________________________________________
-
-sub count($)
- {my ($a) = @_;
-  scalar(keys(%{$a->{t}}));
- }
-
-#_ Sum __________________________________________________________________
-# Get the single term from a sum containing just one term
-#________________________________________________________________________
-
-sub st($)
- {my ($a) = @_;
-  return (values(%{$a->{t}}))[0] if scalar(keys(%{$a->{t}})) == 1;
-  undef;
- }
-
-#_ Sum __________________________________________________________________
-# Create a sum from a list of terms.  Cannot be called as a method.
-#________________________________________________________________________
 
 sub sigma(@)
  {return $zero unless scalar(@_);
@@ -106,9 +98,78 @@ sub sigma(@)
   $z->z;
  }
 
-#_ Sum __________________________________________________________________
-# Negate: multiply each term in a sum by -1
-#________________________________________________________________________
+
+=head3 makeInt
+
+Construct an integer
+
+=cut
+
+
+sub makeInt($)
+ {sigma(term()->one->clone->c(shift())->z)
+ }
+
+
+=head2 Methods
+
+
+=head3 isSum
+
+Confirm type
+
+=cut
+
+
+sub isSum($) {1}; 
+
+
+=head3 t
+
+Get list of terms from existing sum
+
+=cut
+
+
+sub t($)
+ {my ($a) = @_;
+  (map {$a->{t}{$_}} sort(keys(%{$a->{t}})));
+ }
+
+
+=head3 count
+
+Count terms in sum              
+
+=cut
+
+
+sub count($)
+ {my ($a) = @_;
+  scalar(keys(%{$a->{t}}));
+ }
+
+
+=head3 st
+
+Get the single term from a sum containing just one term
+
+=cut
+
+
+sub st($)
+ {my ($a) = @_;
+  return (values(%{$a->{t}}))[0] if scalar(keys(%{$a->{t}})) == 1;
+  undef;
+ }
+
+
+=head3 negate
+
+Multiply each term in a sum by -1
+
+=cut
+
 
 sub negate($)
  {my ($s) = @_;
@@ -119,18 +180,26 @@ sub negate($)
   sigma(@t);
  }
 
-#_ Sum __________________________________________________________________
-# Add two sums together to make a new sum
-#________________________________________________________________________
+
+=head3 add
+
+Add two sums together to make a new sum
+
+=cut
+
 
 sub add($$)
  {my ($a, $b) = @_;
   sigma($a->t, $b->t);
  }
 
-#_ Sum __________________________________________________________________
-# Subtract one sum from another
-#________________________________________________________________________
+
+=head3 subtract
+
+Subtract one sum from another
+
+=cut
+
 
 sub subtract($$)
  {my ($a, $b) = @_;
@@ -138,9 +207,14 @@ sub subtract($$)
   $a->add($b->negate);
  }
 
-#_ Sum __________________________________________________________________
-# Conditional multiply
-#________________________________________________________________________
+
+=head3 Conditional Multiply
+
+Multiply two sums if both sums are defined, otherwise return
+the defined sum.  Assumes that at least one sum is defined.
+
+=cut
+
 
 sub multiplyC($$)
  {my ($a, $b) = @_;
@@ -149,9 +223,13 @@ sub multiplyC($$)
   $a->multiply($b);
  }
 
-#_ Sum __________________________________________________________________
-# Multiply two sums together to make a new sum
-#________________________________________________________________________
+
+=head3 multiply
+
+Multiply two sums together
+
+=cut
+
 
 my %M; # Memoize multiplication
 
@@ -237,9 +315,13 @@ sub multiply($$)
   $C;
  }
 
-#_ Sum __________________________________________________________________
-# Divide one sum by another
-#________________________________________________________________________
+
+=head3 divide
+
+Divide one sum by another
+
+=cut
+
 
 sub divide($$)
  {my ($A, $B) = @_;
@@ -284,32 +366,29 @@ sub divide($$)
   sigma(@t);
  }
 
-#______________________________________________________________________
-# Make an integer
-#______________________________________________________________________
 
-sub makeInt($)
- {sigma(term()->one->clone->c(shift())->z)
- }
+=head3 sub
 
-#______________________________________________________________________
-# Substitute.
-#______________________________________________________________________
+Substitute a sum for a variable.
+
+=cut
+
 
 sub sub($@)
  {my $E = shift();
   my @R = @_;
-  my $Z = $zero;
 
 # Each replacement
   for(;@R > 0;)
    {my $s = shift @R; # Replace this variable
     my $w = shift @R; # With this expression
+    my $Z = $zero;
 
     $s =~ /^[a-z]+$/i or croak "Can only substitute an expression for a variable, not $s";
+    $w = newFromString($w) unless ref($w);
     $w->isSum;
 
-# Each expression
+# Each term of the sum comprising the replacement expression.
     for my $t($E->t)
      {my $n = $t->vp($s);
       my %t = $t->split;
@@ -321,16 +400,21 @@ sub sub($@)
       $S = $S->multiply($w->power(makeInt($n))) if $n;
       $Z = $Z->add($S);
      }
+    $E = $Z;
    }
 
 # Result
-  $Z;
+  $E;
  }
 
-#_ Sum __________________________________________________________________
-# Check whether one sum is equal to another after multiplying out all
-# divides and divisors.
-#________________________________________________________________________
+
+=head3 isEqual
+
+Check whether one sum is equal to another after multiplying out all
+divides and divisors.
+
+=cut
+
 
 sub isEqual($)
  {my ($C) = @_;
@@ -375,12 +459,21 @@ sub isEqual($)
   $C;
  }
 
-#_ Sum __________________________________________________________________
-# Normalize sqrts in a sum.
-#________________________________________________________________________
+
+=head3 normalizeSqrts
+
+Normalize sqrts in a sum.
+
+This routine needs fixing.
+
+Its ment to simplify square roots.
+
+=cut
+
 
 sub normalizeSqrts($)
  {my ($s) = @_;
+return $s;
   my (@t, @s);
 
 # Find terms with single simple sqrts that can be normalized.
@@ -417,11 +510,16 @@ sub normalizeSqrts($)
     $s->{t} = $s->{t}->clone->timesInt ($p)   ->z;
     $s->{s} = $s->{s}->clone->divideInt($p*$p)->z;
 
+$DB::single = 1;
     if ($s->{s}->isOne)
-     {push @t, $s->{t}->removeSqrt;
+     {
+
+push @t, $s->{t}->removeSqrt;
      }
     else
-     {push @t, $s->{t}->clone->Sqrt($s->{$s})->z;
+     {
+
+push @t, $s->{t}->clone->Sqrt($s->{$s})->z;
      }
    }
 
@@ -429,16 +527,20 @@ sub normalizeSqrts($)
   sigma(@t);
  }
 
-#_ Sum __________________________________________________________________
-# Check whether one sum is equal to another after multiplying out sqrts.
-#________________________________________________________________________
+
+=head3 isEqualSqrt
+
+Check whether one sum is equal to another after multiplying out sqrts.
+
+=cut
+
 
 sub isEqualSqrt($)
  {my ($C) = @_;
 
-#______________________________________________________________________
+#_______________________________________________________________________
 # Each sqrt
-#______________________________________________________________________
+#_______________________________________________________________________
 
   for(1..99)
    {$C = $C->normalizeSqrts;
@@ -446,9 +548,9 @@ sub isEqualSqrt($)
     my @n = grep {!defined($_->Sqrt)} $C->t;
     last unless scalar(@s) > 0;
 
-#______________________________________________________________________
+#_______________________________________________________________________
 # Partition by square roots.
-#______________________________________________________________________
+#_______________________________________________________________________
 
     my %S = ();
     for my $t(@s)
@@ -457,23 +559,26 @@ sub isEqualSqrt($)
       push @{$S{$S}}, $t;
      }
 
-#______________________________________________________________________
+#_______________________________________________________________________
 # Square each partitions, as required by the formulae below.
-#______________________________________________________________________
+#_______________________________________________________________________
 
     my @t;
     push @t, sigma(@n)->power($two) if scalar(@n);  # Non sqrt partition 
     for my $s(keys(%S))
-     {push @t, sigma(@{$S{$s}})->power($two);       # Sqrt parition
+     {push @t, sigma(@{$S{$s}})->power($two);       # Sqrt partition
      }
 
-#______________________________________________________________________
+#_______________________________________________________________________
 # I can multiply out upto 4 square roots using the formulae below.     
 # There are formula to multiply out more than 4 sqrts, but they are big.
 # These formulae are obtained by squaring out and rearranging:
 # sqrt(a)+sqrt(b)+sqrt(c)+sqrt(d) == 0 until no sqrts remain, and
 # then matching terms to produce optimal execution.
-#______________________________________________________________________
+# This remarkable result was obtained with the help of this package:
+# demonstrating its utility in optimizing complex calculations written
+# in Perl: which in of itself cannot optimize broadly.
+#_______________________________________________________________________
    
     my $ns = scalar(@t);
     $ns < 5 or die "There are $ns square roots present.  I can handle less than 5";
@@ -522,7 +627,7 @@ sub isEqualSqrt($)
      }
    }
 
-#_ Sum __________________________________________________________________
+#________________________________________________________________________
 # Test result
 #________________________________________________________________________
 
@@ -530,18 +635,26 @@ sub isEqualSqrt($)
   $C;
  }
 
-#_ Sum __________________________________________________________________
-# Transform a sum assuming that it is equal to zero
-#________________________________________________________________________
+
+=head3 isZero
+
+Transform a sum assuming that it is equal to zero
+
+=cut
+
 
 sub isZero($)
  {my ($C) = @_;
   $C->isEqualSqrt->isEqual;                  
  }
 
-#_ Sum __________________________________________________________________
-# n: 2**n == N or undef 
-#________________________________________________________________________
+
+=head3 powerOfTwo
+
+Check that a number is a power of two
+
+=cut
+
 
 sub powerof2($)
  {my ($N) = @_;
@@ -554,9 +667,13 @@ sub powerof2($)
    }
  }
 
-#_ Sum __________________________________________________________________
-# Solve an equation known to be equal to zero for a specified variable. 
-#________________________________________________________________________
+
+=head3 solve
+
+Solve an equation known to be equal to zero for a specified variable. 
+
+=cut
+
 
 sub solve($$)
  {my ($A, @x) = @_;
@@ -583,7 +700,7 @@ sub solve($$)
   
   $B = $A->isZero;  # Eliminate sqrts and negative powers
 
-# Strike all terms with free variables other than x: i.e. not and not one of the named constants
+# Strike all terms with free variables other than x: i.e. not x and not one of the named constants
   my @t = ();
   for my $t($B->t)
    {my @v = $t->v;
@@ -654,9 +771,13 @@ sub solve($$)
 # $xx; 
  }                   
 
-#_ Sum __________________________________________________________________
-# Power
-#________________________________________________________________________
+
+=head3 power
+
+Raise a sum to an integer power or an integer/2 power.
+
+=cut
+
 
 sub power($$) 
  {my ($a, $b) = @_;
@@ -689,18 +810,22 @@ sub power($$)
   $r;   
  }
 
-#_ Sum __________________________________________________________________
-# Differentiate.
-#________________________________________________________________________
+
+=head3 d
+
+Differentiate.
+
+=cut
+
 
 sub d($;$);
 sub d($;$)
- {my $c = $_[0];  # Differentiate this expression 
+ {my $c = $_[0];  # Differentiate this sum 
   my $b = $_[1];  # With this variable
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Get differentrix. Assume 'x', 'y', 'z' or 't' if appropriate.
-#________________________________________________________________________
+#_______________________________________________________________________
 
   if (defined($b))
    {if (!ref $b)
@@ -730,9 +855,9 @@ sub d($;$)
     $i  == 1 or croak "Please specify a single variable to differentiate by";
    }
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Each term
-#________________________________________________________________________
+#_______________________________________________________________________
 
   my @t = ();
   for my $t($c->t)
@@ -744,9 +869,9 @@ sub d($;$)
     my $e = $E->d($b) if $E;  
     my $l = $L->d($b) if $L;  
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Differentiate Variables: A*v**n->d == A*n*v**(n-1)
-#________________________________________________________________________
+#_______________________________________________________________________
 
      {my $v = $T->clone;
       my $p = $v->vp($b);
@@ -760,9 +885,9 @@ sub d($;$)
        }
      }
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Differentiate Sqrt: A*sqrt(F(x))->d == 1/2*A*f(x)/sqrt(F(x))
-#________________________________________________________________________
+#_______________________________________________________________________
 
     if ($S)
      {my $v = $T->clone->divideInt(2);
@@ -772,9 +897,9 @@ sub d($;$)
       push @t, sigma($v->z)->multiply($s)->divide($S->Sqrt)->t;
      }
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Differentiate Divide: A/F(x)->d == -A*f(x)/F(x)**2
-#________________________________________________________________________
+#_______________________________________________________________________
 
     if ($D)
      {my $v = $T->clone->negate;
@@ -784,9 +909,9 @@ sub d($;$)
       push @t, sigma($v->z)->multiply($d)->divide($D->multiply($D))->t;
      }
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Differentiate Exp: A*exp(F(x))->d == A*f(x)*exp(F(x))
-#________________________________________________________________________
+#_______________________________________________________________________
 
     if ($E)
      {my $v = $T->clone;
@@ -797,9 +922,9 @@ sub d($;$)
       push @t, sigma($v->z)->multiply($e)->t;
      }
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Differentiate Log: A*log(F(x))->d == A*f(x)/F(x)
-#________________________________________________________________________
+#_______________________________________________________________________
 
     if ($L)
      {my $v = $T->clone;
@@ -810,23 +935,33 @@ sub d($;$)
      }
    }
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Result
-#________________________________________________________________________
+#_______________________________________________________________________
 
   sigma(@t);
  }
 
-#_ Sum __________________________________________________________________
-# Simplify just before assignment.
-# There is no general simplification algorithm.  So try various methods
-# and see if any simplifications occur.  This is cheating really, because
-# the examples will represent these specific transformations as general
-# features which they are not.  On the other hand, Mathematics is full of
-# specifics so I suppose its not entirely unacceptable.
-# Simplification cannot be done after every operation as it is
-# inefficient, doing it as part of += ameliorates this inefficiency.    
-#________________________________________________________________________
+
+=head3 simplify
+
+Simplify just before assignment.
+
+There is no general simplification algorithm. So try various methods and
+see if any simplifications occur. This is cheating really, because the
+examples will represent these specific transformations as general
+features which they are not. On the other hand, Mathematics is full of
+specifics so I suppose its not entirely unacceptable.
+
+Simplification cannot be done after every operation as it is
+inefficient, doing it as part of += ameliorates this inefficiency.
+
+Note: += only works as a synonym for simplify() if the left hand side is
+currently undefined. This can be enforced by using my() as in: my $z +=
+($x**2+5x+6)/($x+2);
+
+=cut
+
 
 sub simplify($) 
  {my ($x) = @_;
@@ -834,9 +969,9 @@ sub simplify($)
   $x = eigenValue($x);
  }
 
-#_ Sum __________________________________________________________________
-# Common factor: find the largest factor to one or more expressions
-#________________________________________________________________________
+#_______________________________________________________________________
+# Common factor: find the largest factor in one or more expressions
+#_______________________________________________________________________
 
 sub commonFactor(@) 
  {return undef unless scalar(@_);
@@ -885,9 +1020,9 @@ sub commonFactor(@)
   sigma($r->z);
  }
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Find term of polynomial of highest degree.
-#________________________________________________________________________
+#_______________________________________________________________________
 
 sub polynomialTermOfHighestDegree($$) 
  {my ($p, $v) = @_;     # Polynomial, variable
@@ -903,9 +1038,13 @@ sub polynomialTermOfHighestDegree($$)
   ($n, $t);
  }
 
-#_ Sum __________________________________________________________________
-# Polynomial divide - divide one polynomial (a) by another (b) in variable v
-#________________________________________________________________________
+
+=head3 polynomialDivide
+
+Polynomial divide - divide one polynomial (a) by another (b) in variable v
+
+=cut
+
 
 sub polynomialDivide($$$) 
  {my ($p, $q, $v) = @_;
@@ -923,9 +1062,13 @@ sub polynomialDivide($$$)
   undef;
  }
 
-#_ Sum __________________________________________________________________
-# Eigenvalue check
-#________________________________________________________________________
+
+=head3 eigenValue
+
+Eigenvalue check
+
+=cut
+
 
 sub eigenValue($) 
  {my ($p) = @_;
@@ -950,9 +1093,13 @@ sub eigenValue($)
   $p;
  }
 
-#_ Sum __________________________________________________________________
-# Polynomial division.
-#________________________________________________________________________
+
+=head3 polynomialDivision
+
+Polynomial division.
+
+=cut
+
 
 sub polynomialDivision($) 
  {my ($p) = @_;
@@ -1001,9 +1148,13 @@ sub polynomialDivision($)
   $p;
  }
 
-#_ Sum __________________________________________________________________
-# Sqrt
-#________________________________________________________________________
+
+=head3 Sqrt
+
+Square root of a sum
+
+=cut
+
 
 sub Sqrt($) 
  {my ($x) = @_;
@@ -1016,9 +1167,13 @@ sub Sqrt($)
   sigma(term()->c(1)->Sqrt($x)->z);
  }
 
-#_ Sum __________________________________________________________________
-# Exp
-#________________________________________________________________________
+
+=head3 Exp
+
+Exponential (B<e> raised to the power) of a sum
+
+=cut
+
 
 sub Exp($) 
  {my ($x) = @_;
@@ -1033,9 +1188,13 @@ sub Exp($)
   return sigma($p->clone->Exp(sigma(@r))->z);
  }
 
-#_ Sum __________________________________________________________________
-# Log
-#________________________________________________________________________
+
+=head3 Log
+
+Log to base B<e> of a sum
+
+=cut
+
 
 sub Log($) 
  {my ($x) = @_;
@@ -1048,9 +1207,13 @@ sub Log($)
   sigma(term()->c(1)->Log($x)->z);
  }
 
-#_ Sum __________________________________________________________________
-# Sine
-#________________________________________________________________________
+
+=head3 Sin
+
+Sine of a sum
+
+=cut
+
 
 sub Sin($) 
  {my ($x) = @_;
@@ -1064,9 +1227,13 @@ sub Sin($)
   $i->multiply($half)->multiply($a->negate->Exp->subtract($a->Exp));
  }
 
-#_ Sum __________________________________________________________________
-# Cosine
-#________________________________________________________________________
+
+=head3 cos
+
+Cosine of a sum
+
+=cut
+
 
 sub Cos($) 
  {my ($x) = @_;
@@ -1080,18 +1247,26 @@ sub Cos($)
   $half->multiply($a->negate->Exp->add($a->Exp));
  }
 
-#_ Sum __________________________________________________________________
-# Tan, Sec, Csc, Cot
-#________________________________________________________________________
+
+=head3 Tan, Sec, Csc, Cot
+
+Tan, Sec, Csc, Cot of a sum
+
+=cut
+
 
 sub tan($) {my ($x) = @_; $x->Sin()->divide($x->Cos())}
 sub sec($) {my ($x) = @_; $one     ->divide($x->Cos())}
 sub csc($) {my ($x) = @_; $one     ->divide($x->Sin())}
 sub cot($) {my ($x) = @_; $x->Cos()->divide($x->Sin())}
 
-#_ Sum __________________________________________________________________
-# Sinh
-#________________________________________________________________________
+
+=head3 sinh
+
+Hyperbolic sine of a sum
+
+=cut
+
 
 sub sinh($) 
  {my ($x) = @_;
@@ -1105,9 +1280,13 @@ sub sinh($)
    )
  }
 
-#_ Sum __________________________________________________________________
-# Cosh
-#________________________________________________________________________
+
+=head3 cosh
+
+Hyperbolic cosine of a sum
+
+=cut
+
 
 sub cosh($) 
  {my ($x) = @_;
@@ -1121,18 +1300,26 @@ sub cosh($)
    )
  }
 
-#_ Sum __________________________________________________________________
-# Tanh, Sech, Csch, Coth
-#________________________________________________________________________
+
+=head3 Tanh, Sech, Csch, Coth
+
+Tanh, Sech, Csch, Coth of a sum
+
+=cut
+
 
 sub tanh($) {my ($x) = @_; $x->sinh()->divide($x->cosh())}
 sub sech($) {my ($x) = @_; $one      ->divide($x->cosh())}
 sub csch($) {my ($x) = @_; $one      ->divide($x->sinh())}
 sub coth($) {my ($x) = @_; $x->cosh()->divide($x->sinh())}
 
-#_ Sum __________________________________________________________________
-# Dot - complex dot product.
-#________________________________________________________________________
+
+=head3 dot
+
+Dot - complex dot product of two complex sums
+
+=cut
+
 
 sub dot($$)
  {my ($a, $b) = @_;
@@ -1140,18 +1327,26 @@ sub dot($$)
   $a->re->multiply($b->re)->add($a->im->multiply($b->im));
  }
 
-#_ Sum __________________________________________________________________
-# The area of the parallelogram formed by two complex numbers
-#________________________________________________________________________
+
+=head3 cross
+
+The area of the parallelogram formed by two complex sums
+
+=cut
+
 
 sub cross($$)
  {my ($a, $b) = @_;
   $a->dot($a)->multiply($b->dot($b))->subtract($a->dot($b)->power($two))->Sqrt;
  }
 
-#_ Sum __________________________________________________________________
-# Unit: intersection with unit circle.
-#________________________________________________________________________
+
+=head3 unit
+
+Intersection of a complex sum with the unit circle.
+
+=cut
+
 
 sub unit($)
  {my ($a) = @_;
@@ -1160,9 +1355,13 @@ sub unit($)
   $a->divide($a->modulus);
  }
 
-#_ Sum __________________________________________________________________
-# Real part.
-#________________________________________________________________________
+
+=head3 re
+
+Real part of a complex sum
+
+=cut
+
 
 sub re($)
  {my ($A) = @_;
@@ -1175,9 +1374,13 @@ sub re($)
   sigma(@r);
  }
 
-#_ Sum __________________________________________________________________
-# Imaginary part.
-#________________________________________________________________________
+
+=head3 im
+
+Imaginary part of a complex sum
+
+=cut
+
 
 sub im($)
  {my ($A) = @_;
@@ -1190,27 +1393,39 @@ sub im($)
   $mI->multiply(sigma(@r));
  }
 
-#_ Sum __________________________________________________________________
-# Modulus.
-#________________________________________________________________________
+
+=head3 modulus
+
+Modulus of a complex sum
+
+=cut
+
 
 sub modulus($)
  {my ($a) = @_;
   $a->re->power($two)->add($a->im->power($two))->Sqrt;
  }
 
-#_ Sum __________________________________________________________________
-# Conjugate.
-#________________________________________________________________________
+
+=head3 conjugate
+
+Conjugate of a complexs sum
+
+=cut
+
 
 sub conjugate($)
  {my ($a) = @_;
   $a->re->subtract($a->im->multiply($i));
  }
 
-#_ Sum __________________________________________________________________
-# Clone
-#________________________________________________________________________
+
+=head3 clone
+
+Clone
+
+=cut
+
 
 sub clone($) 
  {my ($t) = @_;
@@ -1223,10 +1438,14 @@ sub clone($)
   $c;
  }
 
-#_ Sum __________________________________________________________________
-# Sign the term. Used to optimize add().
+
+=head3 signature
+
+Signature of a sum: used to optimize add().
 # Fix the problem of adding different logs
-#________________________________________________________________________
+
+=cut
+
 
 sub signature($) 
  {my ($t) = @_;
@@ -1237,18 +1456,26 @@ sub signature($)
   $s;
  }
 
-#_ Sum __________________________________________________________________
-# Get the signature of a term
-#________________________________________________________________________
+
+=head3 getSignature
+
+Get the signature (see L</signature>) of a sum
+
+=cut
+
 
 sub getSignature($) 
  {my ($t) = @_;
-  exists $t->{z} ? $t->{z} : die "Attempt to get signature of unfinalized term";
+  exists $t->{z} ? $t->{z} : die "Attempt to get signature of unfinalized sum";
  }
 
-#_ Sum __________________________________________________________________
-# Get Id of sum    
-#________________________________________________________________________
+
+=head3 id
+
+Get Id of sum: each sum has a unique identifying number.    
+
+=cut
+
 
 sub id($) 
  {my ($t) = @_;
@@ -1256,9 +1483,13 @@ sub id($)
   $t->{id};
  }
 
-#_ Sum __________________________________________________________________
-# Check sum finalized
-#________________________________________________________________________
+
+=head3 zz
+
+Check sum finalized.  See: L</z>.
+
+=cut
+
 
 sub zz($) 
  {my ($t) = @_;
@@ -1267,9 +1498,14 @@ sub zz($)
   $t;
  }
 
-#_ Sum __________________________________________________________________
-# Finalize creation of the sum 
-#________________________________________________________________________
+
+=head3 z
+
+Finalize creation of the sum: Once a sum has been finalized it becomes
+read only.
+
+=cut
+
 
 my $lock = 0;   # Hash locking
 my $z = 0;      # Term counter
@@ -1307,9 +1543,13 @@ sub lockHashes()
   $lock = 1;
  }
 
-#_ Sum __________________________________________________________________
-# Print
-#________________________________________________________________________
+
+=head3 print
+
+Print sum
+
+=cut
+
 
 sub print($) 
  {my ($t) = @_;
@@ -1341,9 +1581,13 @@ sub print($)
   $s;
  }              
 
-#_ Sum __________________________________________________________________
-# Useful constants
-#________________________________________________________________________
+
+=head3 constants
+
+Useful constants
+
+=cut
+
 
 $zero  = sigma(term('0'));    sub zero()  {$zero}
 $one   = sigma(term('1'));    sub one()   {$one}
@@ -1356,9 +1600,13 @@ $half  = sigma(term('1/2'));  sub half()  {$half}
 $mHalf = sigma(term('-1/2')); sub mHalf() {$mHalf}
 $pi    = sigma(term('pi'));   sub pi()    {$pi}   
 
-#______________________________________________________________________
-# Factor a number.
-#______________________________________________________________________
+
+=head3 factorize
+
+Factorize a number.
+
+=cut
+
 
 @primes = qw(
   2  3   5   7   11  13  17  19  23  29  31  37  41  43  47  53  59  61
@@ -1386,108 +1634,50 @@ sub factorize($)
   $f;
  };
 
-#_ Sum __________________________________________________________________
-# Import - parameters from caller - set up as requested.
-#________________________________________________________________________
+
+=head2 import
+
+Export L</n> with either the default name B<sums>, or a name supplied by
+the caller of this package.
+
+=cut
+
 
 sub import
  {my %P = (program=>@_);
   my %p; $p{lc()} = $P{$_} for(keys(%P));
 
-#_ Sum __________________________________________________________________
-# New symbols term constructor - export to calling package.
-#________________________________________________________________________
+#_______________________________________________________________________
+# New sum constructor - export to calling package.
+#_______________________________________________________________________
 
-  my $s = <<'END';
-package XXXX;
-
-BEGIN  {delete $XXXX::{NNNN}}
-
+  my $s = "package XXXX;\n". <<'END';
+no warnings 'redefine';
 sub NNNN
- {return SSSS::n(@_);
+ {return SSSSn(@_);
  }
+use warnings 'redefine';
 END
 
-#_ Sum __________________________________________________________________
-# Complex functions: re, im, dot, cross, conjugate, modulus              
-#________________________________________________________________________
-  
-  if (exists($p{complex}))
-   {$s .= <<'END';
-BEGIN  {delete @XXXX::{qw(conjugate cross dot im modulus re unit)}}
-END
-    $s .= <<'END' if $p{complex};
-sub conjugate($)  {SSSS::conjugate($_[0])}
-sub cross    ($$) {SSSS::cross    ($_[0], $_[1])}
-sub dot      ($$) {SSSS::dot      ($_[0], $_[1])}
-sub im       ($)  {SSSS::im       ($_[0])}
-sub modulus  ($)  {SSSS::modulus  ($_[0])}
-sub re       ($)  {SSSS::re       ($_[0])}
-sub unit     ($)  {SSSS::unit     ($_[0])}
-END
-   }
-
-#_ Sum __________________________________________________________________
-# Trigonometric functions: tan, sec, csc, cot              
-#________________________________________________________________________
-
-  if (exists($p{trig}) or exists($p{trigonometric}))
-   {$s .= <<'END';
-BEGIN  {delete @XXXX::{qw(tan sec csc cot)}}
-END
-    $s .= <<'END' if $p{trig} or $p{trigonometric};
-sub tan($) {SSSS::tan($_[0])}
-sub sec($) {SSSS::sec($_[0])}
-sub csc($) {SSSS::csc($_[0])}
-sub cot($) {SSSS::cot($_[0])}
-END
-   }
-  if (exists($p{trig}) and exists($p{trigonometric}))
-   {croak 'Please use specify just one of trig or trigonometric';
-   }
-
-#_ Sum __________________________________________________________________
-# Hyperbolic functions: sinh, cosh, tanh, sech, csch, coth              
-#________________________________________________________________________
-
- if (exists($p{hyper}) or exists($p{hyperbolic}))
-  {$s .= <<'END';
-BEGIN  {delete @XXXX::{qw(sinh cosh tanh sech csch coth)}}
-END
-    $s .= <<'END' if $p{hyper} or $p{hyperbolic};
-sub sinh($) {SSSS::sinh($_[0])}
-sub cosh($) {SSSS::cosh($_[0])}
-sub tanh($) {SSSS::tanh($_[0])}
-sub sech($) {SSSS::sech($_[0])}
-sub csch($) {SSSS::csch($_[0])}
-sub coth($) {SSSS::coth($_[0])}
-END
-  }
- if (exists($p{hyper}) and exists($p{hyperbolic}))
-  {croak 'Please specify just one of hyper or hyperbolic';
-  }
-
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Export to calling package.
-#________________________________________________________________________
+#_______________________________________________________________________
 
   my $name   = 'sum';
      $name   = $p{sum} if exists($p{sum});
   my ($main) = caller();
-  my $pack   = __PACKAGE__;   
+  my $pack   = __PACKAGE__ . '::';   
 
   $s=~ s/XXXX/$main/g;
   $s=~ s/NNNN/$name/g;
   $s=~ s/SSSS/$pack/g;
   eval($s);
 
-#_ Sum __________________________________________________________________
+#_______________________________________________________________________
 # Check options supplied by user
-#________________________________________________________________________
+#_______________________________________________________________________
 
-  delete @p{qw(
-symbols program trig trigonometric hyper hyperbolic complex
-)};
+  delete @p{qw(program sum)};
 
   croak "Unknown option(s): ". join(' ', keys(%p))."\n\n". <<'END' if keys(%p);
 
@@ -1496,33 +1686,19 @@ Valid options are:
   sum    =>'name' Create a routine with this name in the callers
                   namespace to create new symbols. The default is
                   'sum'.
-
-
-  trig   =>0      The default, no trigonometric functions         
-  trig   =>1      Export trigonometric functions: tan, sec, csc, cot.
-                  sin, cos are created by default by overloading 
-                  the existing Perl sin and cos operators.
-
-  trigonometric can be used instead of trig.
-
-
-  hyper  =>0      The default, no hyperbolic functions         
-  hyper  =>1      Export hyperbolic functions:
-                    sinh, cosh, tanh, sech, csch, coth.
-
-  hyperbolic can be used instead of hyper.
-
-
-  complex=>0      The default, no complex functions         
-  complex=>1      Export complex functions:
-                    conjugate, cross, dot, im, modulus, re,  unit
-
 END
  }
 
-#_ Sum __________________________________________________________________
-# Overload.
-#________________________________________________________________________
+
+=head2 Operators
+
+
+=head3 Operator Overloads
+
+Overload Perl operators. Beware the low priority of B<^>.
+
+=cut
+
 
 use overload
  '+'     =>\&add3,
@@ -1549,9 +1725,13 @@ use overload
  '!'     =>\&unit3,  
  fallback=>1;
 
-#_ Sum __________________________________________________________________
-# Add operator.
-#________________________________________________________________________
+
+=head3 add3
+
+Add operator.
+
+=cut
+
 
 sub add3
  {my ($a, $b) = @_;
@@ -1561,9 +1741,14 @@ sub add3
   $a->add($b);
  }
 
-#_ Sum __________________________________________________________________
-# Negate operator.
-#________________________________________________________________________
+
+=head3 negate3
+
+Negate operator. Used in combination with the L</add3> operator to
+perform subtraction.
+
+=cut
+
 
 sub negate3
  {my ($a, $b, $c) = @_;
@@ -1580,9 +1765,13 @@ sub negate3
    }
  }
 
-#_ Sum __________________________________________________________________
-# Multiply operator.
-#________________________________________________________________________
+
+=head3 multiply3
+
+Multiply operator.
+
+=cut
+
 
 sub multiply3
  {my ($a, $b) = @_;
@@ -1591,9 +1780,13 @@ sub multiply3
   $a->multiply($b);
  }
 
-#_ Sum __________________________________________________________________
-# Divide operator.
-#________________________________________________________________________
+
+=head3 divide3
+
+Divide operator.
+
+=cut
+
 
 sub divide3
  {my ($a, $b, $c) = @_;
@@ -1603,9 +1796,13 @@ sub divide3
   return $a->divide($b) unless $c;
  }
 
-#_ Sum __________________________________________________________________
-# Power operator.
-#________________________________________________________________________
+
+=head3 power3
+
+Power operator.
+
+=cut
+
 
 sub power3
  {my ($a, $b) = @_;
@@ -1614,9 +1811,13 @@ sub power3
   $a->power($b);
  }
 
-#_ Sum __________________________________________________________________
-# Equals operator.
-#________________________________________________________________________
+
+=head3 equals3
+
+Equals operator.
+
+=cut
+
 
 sub equals3
  {my ($a, $b) = @_;
@@ -1631,39 +1832,47 @@ sub equals3
   return 0;
  }
 
-#_ Sum __________________________________________________________________
-# Not equal operator.
-#________________________________________________________________________
+
+=head3 nequal3
+
+Not equal operator.
+
+=cut
+
 
 sub nequal3
  {my ($a, $b) = @_;
   !equals3($a, $b);
  }
 
-#_ Sum __________________________________________________________________
-# <=> operator: Test expressions for equality and die of they are not.
-# Sames as == but dies if fails, and prints line number of
-# caller which makes testing alot easier.
-#________________________________________________________________________
+
+=head3 tequals
+
+Evaluate the expression on the left hand side, stringify iy, and then
+compare it for string equality with the string on the right hand side.
+This opertor is useful for making examples written with Test::Simple
+more readable.
+
+=cut
+
 
 sub tequals3
  {my ($a, $b) = @_;
 
-  our $written;
-  print STDOUT (caller())[2], " ";
-  print " "  if ++$written %   4 == 0;
-  print " "  if   $written %   8 == 0;
-  print "\n" if   $written %  16 == 0;
-  STDOUT->flush;
+  return 1 if "$a" eq $b;
 
-  return 1 if equals3($a, $b); 
+  my $z = simplify($a);
 
-  die "\nDied in ". (caller())[0] ." at ". (caller())[1]. " line ". (caller())[2]. "\n";
+  "$z" eq "$b";
  }
 
-#_ Sum __________________________________________________________________
-# Solve operator.
-#________________________________________________________________________
+
+=head3 solve3
+
+Solve operator.
+
+=cut
+
 
 sub solve3
  {my ($a, $b) = @_;
@@ -1672,9 +1881,13 @@ sub solve3
   solve($a, $b);
  }
 
-#_ Sum __________________________________________________________________
-# Print operator.
-#________________________________________________________________________
+
+=head3 print3
+
+Print operator.
+
+=cut
+
 
 sub print3
  {my ($a) = @_;
@@ -1682,9 +1895,13 @@ sub print3
   $a->print();
  }
 
-#_ Sum __________________________________________________________________
-# Sqrt operator.
-#________________________________________________________________________
+
+=head3 sqrt3
+
+Sqrt operator.
+
+=cut
+
 
 sub sqrt3
  {my ($a) = @_;
@@ -1692,9 +1909,13 @@ sub sqrt3
   $a->Sqrt();
  }
 
-#_ Sum __________________________________________________________________
-# Exp operator.
-#________________________________________________________________________
+
+=head3 exp3
+
+Exp operator.
+
+=cut
+
 
 sub exp3
  {my ($a) = @_;
@@ -1702,9 +1923,13 @@ sub exp3
   $a->Exp();
  }
 
-#_ Sum __________________________________________________________________
-# Sine operator.
-#________________________________________________________________________
+
+=head3 sin3
+
+Sine operator.
+
+=cut
+
 
 sub sin3
  {my ($a) = @_;
@@ -1712,9 +1937,13 @@ sub sin3
   $a->Sin();
  }
 
-#_ Sum __________________________________________________________________
-# Cosine operator.
-#________________________________________________________________________
+
+=head3 cos3
+
+Cosine operator.
+
+=cut
+
 
 sub cos3
  {my ($a) = @_;
@@ -1722,9 +1951,13 @@ sub cos3
   $a->Cos();
  }
 
-#_ Sum __________________________________________________________________
-# Tan operator.
-#________________________________________________________________________
+
+=head3 tan3
+
+Tan operator.
+
+=cut
+
 
 sub tan3
  {my ($a) = @_;
@@ -1732,9 +1965,13 @@ sub tan3
   $a->tan();
  }
 
-#_ Sum __________________________________________________________________
-# Log operator.
-#________________________________________________________________________
+
+=head3 log3
+
+Log operator.
+
+=cut
+
 
 sub log3
  {my ($a) = @_;
@@ -1742,9 +1979,13 @@ sub log3
   $a->Log();
  }
 
-#_ Sum __________________________________________________________________
-# Dot Product operator.
-#________________________________________________________________________
+
+=head3 dot3
+
+Dot Product operator.
+
+=cut
+
 
 sub dot3
  {my ($a, $b, $c) = @_;
@@ -1753,9 +1994,13 @@ sub dot3
   dot($a, $b);
  }
 
-#_ Sum __________________________________________________________________
-# Cross operator.
-#________________________________________________________________________
+
+=head3 cross3
+
+Cross operator.
+
+=cut
+
 
 sub cross3
  {my ($a, $b, $c) = @_;
@@ -1764,9 +2009,13 @@ sub cross3
   cross($a, $b);
  }
 
-#_ Sum __________________________________________________________________
-# Unit operator.
-#________________________________________________________________________
+
+=head3 unit3
+
+Unit operator.
+
+=cut
+
 
 sub unit3
  {my ($a, $b, $c) = @_;
@@ -1774,9 +2023,13 @@ sub unit3
   unit($a);
  }
 
-#_ Sum __________________________________________________________________
-# Modulus operator.
-#________________________________________________________________________
+
+=head3 modulus3
+
+Modulus operator.
+
+=cut
+
 
 sub modulus3
  {my ($a, $b, $c) = @_;
@@ -1784,9 +2037,13 @@ sub modulus3
   modulus($a);
  }
 
-#_ Sum __________________________________________________________________
-# Conjugate.
-#________________________________________________________________________
+
+=head3 conjugate3
+
+Conjugate.
+
+=cut
+
 
 sub conjugate3
  {my ($a, $b, $c) = @_;
@@ -1794,7 +2051,7 @@ sub conjugate3
   conjugate($a);
  }
 
-#_ Sum __________________________________________________________________
+#________________________________________________________________________
 # Package installed successfully
 #________________________________________________________________________
 
@@ -1802,38 +2059,53 @@ sub conjugate3
 
 __DATA__
 
+
 #______________________________________________________________________
 # User guide.
 #______________________________________________________________________
 
 =head1 NAME
 
-Math::Algebra::Symbols - Symbolic Algebra using Perl
+User guide.
+
+Math::Algebra::Symbols - Symbolic Algebra in Pure Perl.
 
 =head1 SYNOPSIS
 
+Example symbols.pl
+
+ #!perl -w -I..
+ #______________________________________________________________________
+ # Symbolic algebra.
+ # Perl License.
+ # PhilipRBrenan@yahoo.com, 2004.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols hyper=>1;
-
- my ($n, $x, $y) = symbols(qw(n x y));
-
- my  $a    += ($x**8 - 1)/($x-1);
- my  $b    +=  sin($x)**2 + cos($x)**2; 
- my  $c    += (sin($n*$x) + cos($n*$x))->d->d->d->d / (sin($n*$x)+cos($n*$x));
- my  $d     =  tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
- my ($e,$f) =  @{($x**2 eq 5*$x-6) > $x};
-
+ use Test::Simple tests=>5;
+ 
+ ($n, $x, $y) = symbols(qw(n x y));
+ 
+ $a     += ($x**8 - 1)/($x-1);
+ $b     +=  sin($x)**2 + cos($x)**2; 
+ $c     += (sin($n*$x) + cos($n*$x))->d->d->d->d / (sin($n*$x)+cos($n*$x));
+ $d      =  tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+ ($e,$f) =  @{($x**2 eq 5*$x-6) > $x};
+ 
  print "$a\n$b\n$c\n$d\n$e,$f\n";
+ 
+ ok("$a"    eq '$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1');
+ ok("$b"    eq '1'); 
+ ok("$c"    eq '$n**4'); 
+ ok("$d"    eq '1'); 
+ ok("$e,$f" eq '2,3');
+ 
 
- # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
- # 1
- # $n**4
- # 1
- # 2,3
 
 =head1 DESCRIPTION
 
 This package supplies a set of functions and operators to manipulate
-operator expressions algebraically  using the familiar Perl syntax.
+operator expressions algebraically using the familiar Perl syntax.
 
 These expressions are constructed
 from L</Symbols>, L</Operators>, and L</Functions>, and processed via
@@ -1843,13 +2115,22 @@ L</Methods>.  For examples, see: L</Examples>.
 
 Symbols are created with the exported B<symbols()> constructor routine:
 
+Example t/constants.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: constants.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
-
+ use Test::Simple tests=>1;
+ 
  my ($x, $y, $i, $o, $pi) = symbols(qw(x y i 1 pi));
+ 
+ ok( "$x $y $i $o $pi"   eq   '$x $y i 1 $pi'  );
+ 
 
- print "$x $y $i $o\n";
-
- # $x $y $i 1
 
 The B<symbols()> routine constructs references to symbolic variables and
 symbolic constants from a list of names and integer constants.
@@ -1859,38 +2140,66 @@ The special symbol B<i> is recognized as the square root of B<-1>.
 The special symbol B<pi> is recognized as the smallest positive real
 that satisfies:
 
+Example t/ipi.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: constants.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>2;
+ 
+ my ($i, $pi) = symbols(qw(i pi));
+ 
+ ok(  exp($i*$pi)  ==   -1  );
+ ok(  exp($i*$pi) <=>  '-1' );
+ 
 
- ($i, $pi) = symbols(qw(i pi));
-
- print exp($i*$pi), "\n";
-
- # -1
 
 =head3 Constructor Routine Name
 
 If you wish to use a different name for the constructor routine, say
 B<S>:
 
+Example t/ipi2.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: constants.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols symbols=>'S';
+ use Test::Simple tests=>2;
+ 
+ my ($i, $pi) = S(qw(i pi));
+ 
+ ok(  exp($i*$pi)  ==   -1  );
+ ok(  exp($i*$pi) <=>  '-1' );
 
- my ($x, $y, $i, $o) = S(qw(x y i 1));
 
- print "$x $y $i $o\n";
+=head3 Big Integers
 
- # $x $y $i 1
+Symbols automatically uses big integers if needed.
 
-=head3 Constructing Expressions with Big Integers
+Example t/bigInt.t
 
-If you wish to use Math::Algebra::Symbols constructed with big integers from L<Math::BigInt>:
-
- use Math::Algebra::Symbols BigInt=>1;
-
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: bigInt.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
+ use Math::Algebra::Symbols;
+ use Test::Simple tests=>1;
+ 
  my $z = symbols('1234567890987654321/1234567890987654321');
+ 
+ ok( eval $z eq '1');
+ 
 
- print "$z\n";
-
- # 1
 
 =head2 Operators
 
@@ -1901,80 +2210,159 @@ L</Symbols> can be combined with L</Operators> to create symbolic expressions:
 
 =head4 Arithmetic Operators: B<+> B<-> B<*> B</> B<**> 
             
+Example t/x2y2.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: simplification.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+ 
+ my ($x, $y) = symbols(qw(x y));
+ 
+ ok(  ($x**2-$y**2)/($x-$y)  ==  $x+$y  );
+ ok(  ($x**2-$y**2)/($x-$y)  !=  $x-$y  );
+ ok(  ($x**2-$y**2)/($x-$y) <=> '$x+$y' );
+ 
+ 
 
- ($x, $y) = symbols(qw(x y));
 
- $z = ($x**2-$y**2)/($x-$y);
-
- print "$z\n";
-
- # $x+$y
-
-The auto assign versions of these operators: B<+=> B<-=> B<*=> B</=> all
-work courtesy of Perl Auto-Magical Operator Generation.
+The operators: B<+=> B<-=> B<*=> B</=> are overloaded to work
+symbolically rather than numerically. If you need numeric results, you
+can always B<eval()> the resulting symbolic expression.
 
 =head4 Square root Operator: B<sqrt>       
 
+Example t/ix.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: sqrt(-1).
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>2;
+ 
+ my ($x, $i) = symbols(qw(x i));
+ 
+ ok(  sqrt(-$x**2)  ==  $i*$x  );
+ ok(  sqrt(-$x**2)  <=> 'i*$x' );
+ 
+ 
 
- $x = symbols(qw(x));
 
- $z = sqrt(-$x**2);
-
- print "$z\n";
-
- # $i*$x
+The square root is represented by the symbol B<i>, which allows complex
+expressions to be processed by Math::Complex.
 
 =head4 Exponential Operator: B<exp>       
 
+Example t/expd.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: exp.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>2;
+ 
+ my ($x, $i) = symbols(qw(x i));
+ 
+ ok(   exp($x)->d($x)  ==   exp($x)  );
+ ok(   exp($x)->d($x) <=>  'exp($x)' );
+ 
+ 
 
- $x = symbols(qw(x));
 
- $z = exp($x)->d($x);
-
- print "$z\n";
-
- # exp($x)
+The exponential operator.
 
 =head4 Logarithm Operator: B<log>       
 
+Example t/logExp.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: log: need better example.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>1;
+ 
+ my ($x) = symbols(qw(x));
+ 
+ ok(   log($x) <=>  'log($x)' );
+ 
+ 
 
- $x = symbols(qw(x));
 
- $z = log(exp($x)*exp($x));
+Logarithm to base B<e>.
 
- print "$z\n";
-
- # 2*$x
+Note: the above result is only true for x > 0.  B<Symbols> does not include domain and range
+specifications of the functions it uses.
 
 =head4 Sine and Cosine Operators: B<sin> and B<cos>       
 
+Example t/sinCos.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: simplification.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+ 
+ my ($x) = symbols(qw(x));
+ 
+ ok(  sin($x)**2 + cos($x)**2  ==  1  );
+ ok(  sin($x)**2 + cos($x)**2  !=  0  );
+ ok(  sin($x)**2 + cos($x)**2 <=> '1' );
+ 
+ 
 
- $x = symbols(qw(x));
 
- $z = sin($x)**2 + cos($x)**2;
+This famous trigonometric identity is not preprogrammed into B<Symbols>
+as it is in commercial products.
 
- print "$z\n";
-
- # 1
+Instead: an expression for B<sin()> is constructed using the complex
+exponential: L</exp>, said expression is algebraically multiplied out to
+prove the identity. The proof steps involve large intermediate
+expressions in each step, as yet I have not provided a means to neatly
+lay out these intermediate steps and thus provide a more compelling
+demonstration of the ability of B<Symbols> to verify such statements
+from first principles.
+ 
 
 =head3 Relational operators                                   
 
 =head4 Relational operators: B<==>, B<!=> 
 
+Example t/x2y2.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: simplification.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+ 
+ my ($x, $y) = symbols(qw(x y));
+ 
+ ok(  ($x**2-$y**2)/($x-$y)  ==  $x+$y  );
+ ok(  ($x**2-$y**2)/($x-$y)  !=  $x-$y  );
+ ok(  ($x**2-$y**2)/($x-$y) <=> '$x+$y' );
+ 
+ 
 
- ($x, $y) = symbols(qw(x y));
-
- $z = ($x**2-$y**2)/($x+$y) == $x - $y;
-
- print "$z\n";
-
- # 1
 
 The relational equality operator B<==> compares two symbolic expressions
 and returns TRUE(1) or FALSE(0) accordingly. B<!=> produces the opposite
@@ -1982,15 +2370,25 @@ result.
 
 =head4 Relational operator: B<eq> 
 
+Example t/eq.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: solving.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+ 
+ my ($x, $v, $t) = symbols(qw(x v t));
+ 
+ ok(  ($v eq $x / $t)->solve(qw(x in terms of v t))  ==  $v*$t  );
+ ok(  ($v eq $x / $t)->solve(qw(x in terms of v t))  !=  $v+$t  );
+ ok(  ($v eq $x / $t)->solve(qw(x in terms of v t)) <=> '$v*$t' );
+ 
+ 
 
- ($x, $v, $t) = symbols(qw(x v t));
-
- $z = ($v eq $x / $t)->solve(qw(x in terms of v t));
-
- print "x=$z\n";
-
- # x=$v*$t
 
 The relational operator B<eq> is a synonym for the minus B<-> operator,
 with the expectation that later on the L<solve()|/Solving equations>
@@ -2002,15 +2400,25 @@ functional difference.
 
 =head4 Complex operators: the B<dot> operator: B<^>       
 
+Example t/dot.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: dot operator.  Note the low priority
+ # of the ^ operator.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+ 
+ my ($a, $b, $i) = symbols(qw(a b i));
+ 
+ ok(  (($a+$i*$b)^($a-$i*$b))  ==  $a**2-$b**2  );
+ ok(  (($a+$i*$b)^($a-$i*$b))  !=  $a**2+$b**2  );
+ ok(  (($a+$i*$b)^($a-$i*$b)) <=> '$a**2-$b**2' );
+ 
 
- ($a, $b, $i) = symbols(qw(a b i));
-
- $z = ($a+$i*$b)^($a-$i*$b);
-
- print "$z\n";
-
- # $a**2-$b**2
 
 Note the use of brackets.  The B<^> operator has low priority.
 
@@ -2020,15 +2428,24 @@ to which the vector dot product is applied.
 
 =head4 Complex operators: the B<cross> operator: B<x>       
 
+Example t/cross.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: cross operator.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+ 
+ my ($x, $i) = symbols(qw(x i));
+ 
+ ok(  $i*$x x $x  ==  $x**2  );
+ ok(  $i*$x x $x  !=  $x**3  );
+ ok(  $i*$x x $x <=> '$x**2' );
+ 
 
- ($x, $i) = symbols(qw(x i));
-
- $z = $i*$x x $x;
-
- print "$z\n";
-
- # $x**2
 
 The B<x> operator treats its left hand and right hand arguments as
 complex numbers, which in turn are regarded as two dimensional vectors
@@ -2040,43 +2457,73 @@ the expression correctly.
 
 =head4 Complex operators: the B<conjugate> operator: B<~>       
 
+Example t/conjugate.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: dot operator.  Note the low priority
+ # of the ^ operator.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+ 
+ my ($x, $y, $i) = symbols(qw(x y i));
+ 
+ ok(  ~($x+$i*$y)  ==  $x-$i*$y  );
+ ok(  ~($x-$i*$y)  ==  $x+$i*$y  );
+ ok(  (($x+$i*$y)^($x-$i*$y)) <=> '$x**2-$y**2' );
+ 
 
- ($x, $y, $i) = symbols(qw(x y i));
-
- $z = $x+$i*$y;
-
- print ~$z, "\n";
-
- # $x-$i*$y
 
 The B<~> operator returns the complex conjugate of its right hand side.
 
 =head4 Complex operators: the B<modulus> operator: B<abs>       
 
+Example t/abs.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: dot operator.  Note the low priority
+ # of the ^ operator.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+ 
+ my ($x, $i) = symbols(qw(x i));
+ 
+ ok(  abs($x+$i*$x)  ==  sqrt(2*$x**2)  );
+ ok(  abs($x+$i*$x)  !=  sqrt(2*$x**3)  );
+ ok(  abs($x+$i*$x) <=> 'sqrt(2*$x**2)' );
+ 
 
- ($x, $i) = symbols(qw(x i));
-
- $z = abs($x+$i*$x);
-
- print "$z\n";
-
- # sqrt(2)*$x
 
 The B<abs> operator returns the modulus (length) of its right hand side.
 
 =head4 Complex operators: the B<unit> operator: B<!>       
 
+Example t/unit.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: unit operator.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>4;
+ 
+ my ($i) = symbols(qw(i));
+ 
+ ok(  !$i      == $i                         );
+ ok(  !$i     <=> 'i'                        );
+ ok(  !($i+1) <=>  '1/(sqrt(2))+i/(sqrt(2))' );
+ ok(  !($i-1) <=> '-1/(sqrt(2))+i/(sqrt(2))' );
+ 
 
- $i = symbols(qw(i));
-
- $z = !($i+1);
-
- print "$z\n";
-
- # $i*sqrt(1/2)+sqrt(1/2)
 
 The B<!> operator returns a complex number of unit length pointing in
 the same direction as its right hand side.
@@ -2085,19 +2532,28 @@ the same direction as its right hand side.
 
 =head4 Equation Manipulation Operators: B<Simplify> operator: B<+=>
 
+Example t/simplify.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: simplify.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>2;
+  
+ my ($x) = symbols(qw(x));
  
- ($x) = symbols(qw(x));
+ ok(  ($x**8 - 1)/($x-1)  ==  $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1  );      
+ ok(  ($x**8 - 1)/($x-1) <=> '$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1' );      
  
-  $z += ($x**8 - 1)/($x-1);
 
- print "$z\n";
-
- # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
 
 The simplify operator B<+=> is a synonym for the
 L<simplify()|/"simplifying_equations:_simplify()"> method, if and only
 if, the target on the left hand side initially has a value of undef.
+
 Admittedly this is very strange behavior: it arises due to the shortage
 of over-rideable operators in Perl: in particular it arises due to the
 shortage of over-rideable unary operators in Perl. Never-the-less: this
@@ -2106,15 +2562,27 @@ the desired pre-condition can always achieved by using B<my>.
 
 =head4 Equation Manipulation Operators: B<Solve> operator: B<E<gt>> 
 
+Example t/solve2.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: simplify.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>2;
+  
+ my ($t) = symbols(qw(t));
+ 
+ my $rabbit  = 10 + 5 * $t;
+ my $fox     = 7 * $t * $t;
+ my ($a, $b) = @{($rabbit eq $fox) > $t};
+ 
+ ok( "$a" eq  '1/14*sqrt(305)+5/14'  );      
+ ok( "$b" eq '-1/14*sqrt(305)+5/14'  );      
+ 
 
- ($x, $v, $t) = symbols(qw(x v t));
-
- $z = ($v eq $x / $t) > [qw(x in terms of v t)];
-
- print "x=$z\n";
-
- # x=$v*$t
 
 The solve operator B<E<gt>> is a synonym for the
 L<solve()|/"Solving_equations:_solve()"> method.
@@ -2157,15 +2625,22 @@ the user's namespace as described in L</EXPORT>.
 
 =head4 Trigonometric functions
 
- use Math::Algebra::Symbols trig=>1;
+Example t/sinCos2.t
 
- ($x, $y) = symbols(qw(x y));
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: methods.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
+ use Math::Algebra::Symbols;
+ use Test::Simple tests=>1;
+ 
+ my ($x, $y) = symbols(qw(x y));
+ 
+ ok( (sin($x)**2 == (1-cos(2*$x))/2) );
+ 
 
- $z = sin($x)**2 == (1-cos(2*$x))/2;
-
- print "$z\n";
-
- # 1
 
 The trigonometric functions B<cos>, B<sin>, B<tan>, B<sec>, B<csc>,
 B<cot> are available, either as exports to the caller's name space, or
@@ -2173,15 +2648,22 @@ as methods.
 
 =head4 Hyperbolic functions
 
+Example t/tanh.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: methods.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols hyper=>1;
+ use Test::Simple tests=>1;
+ 
+ my ($x, $y) = symbols(qw(x y));
+ 
+ ok( tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y)));
+ 
 
- ($x, $y) = symbols(qw(x y));
-
- $z = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
-
- print "$z\n";
-
- # 1
 
 The hyperbolic functions B<cosh>, B<sinh>, B<tanh>, B<sech>, B<csch>,
 B<coth> are available, either as exports to the caller's name space, or
@@ -2193,14 +2675,23 @@ as methods.
 
  use Math::Algebra::Symbols complex=>1;
 
- ($x, $i) = symbols(qw(x i));
+Example t/reIm.t
 
- $R = re($i*$x);
- $I = im($i*$x);
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: methods.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
+ use Math::Algebra::Symbols;
+ use Test::Simple tests=>2;
+ 
+ my ($x, $i) = symbols(qw(x i));
+ 
+ ok( ($i*$x)->re   <=>  0    );
+ ok( ($i*$x)->im   <=>  '$x' );
+ 
 
- print "$R $I\n";
-
- # 0 $x
 
 The B<re> and B<im> functions return an expression which represents the
 real and imaginary parts of the expression, assuming that symbolic
@@ -2208,35 +2699,47 @@ variables represent real numbers.
 
 =head4 Complex functions: B<dot> and B<cross>       
 
- use Math::Algebra::Symbols complex=>1;
+Example t/dotCross.t
 
- $i = symbols(qw(i));
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: methods.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
+ use Math::Algebra::Symbols;
+ use Test::Simple tests=>2;
+ 
+ my $i = symbols(qw(i));
+ 
+ ok( ($i+1)->cross($i-1)   <=>  2 );
+ ok( ($i+1)->dot  ($i-1)   <=>  0 );
+ 
 
- $c = cross($i+1, $i-1);
- $d = dot  ($i+1, $i-1);
-
- print "$c $d\n";
-
- # 2 0
 
 The B<dot> and B<cross> operators are available as functions, either as
 exports to the caller's name space, or as methods.
 
 =head4 Complex functions: B<conjugate>, B<modulus> and B<unit>       
 
- use Math::Algebra::Symbols complex=>1;
+Example t/conjugate2.t
 
- $i = symbols(qw(i));
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: methods.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
+ use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+ 
+ my $i = symbols(qw(i));
+ 
+ ok( ($i+1)->unit      <=>  '1/(sqrt(2))+i/(sqrt(2))' );
+ ok( ($i+1)->modulus   <=>  'sqrt(2)'                 );
+ ok( ($i+1)->conjugate <=>  '1-i'                     );
+ 
 
- $x = unit($i+1);
- $y = modulus($i+1);
- $z = conjugate($i+1);
-
- print "$x\n$y\n$z\n";
-
- # $i*sqrt(1/2)+sqrt(1/2)
- # sqrt(2)
- # 1-$i
 
 The B<conjugate>, B<abs> and B<unit> operators are available as
 functions: B<conjugate>, B<modulus> and B<unit>, either as exports to
@@ -2252,17 +2755,26 @@ overloading.
 
 =head4 Simplifying equations: B<simplify()>
 
+Example t/simplify2.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: simplify.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>2;
+  
+ my ($x) = symbols(qw(x));
+  
+ my $y  = (($x**8 - 1)/($x-1))->simplify();  # Simplify method 
+ my $z +=  ($x**8 - 1)/($x-1);               # Simplify via +=
  
- ($x) = symbols(qw(x));
+ ok( "$y" eq '$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1' );
+ ok( "$z" eq '$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1' );
  
-  $y  = (($x**8 - 1)/($x-1))->simplify();  # Simplify method 
-  $z +=  ($x**8 - 1)/($x-1);               # Simplify via += 
 
- print "$y\n$z\n";
-
- # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
- # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
 
 B<Simplify()> attempts to simplify an expression. There is no general
 simplification algorithm: consequently simplifications are carried out
@@ -2283,20 +2795,25 @@ manner.
 
 =head4 Substituting into equations: B<sub()>
 
+Example t/sub.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: expression substitution for a variable.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>2;
  
- ($x, $y) = symbols(qw(x y));
+ my ($x, $y) = symbols(qw(x y));
+  
+ my $e  = 1+$x+$x**2/2+$x**3/6+$x**4/24+$x**5/120;
  
- $e  = 1+$x+$x**2/2+$x**3/6+$x**4/24+$x**5/120;
+ ok(  $e->sub(x=>$y**2, z=>2)  <=> '$y**2+1/2*$y**4+1/6*$y**6+1/24*$y**8+1/120*$y**10+1'  );
+ ok(  $e->sub(x=>1)            <=>  '163/60');          
+ 
 
- $e2 = $e->sub(x=>$y**2, z=>2);   #1
- $e3 = $e->sub(x=>1);             #2
-
- print "$e2\n\n$e3\n\n";
-
- # 1+$y**2+1/2*$y**4+1/6*$y**6+1/24*$y**8+1/120*$y**10
-
- # 163/60
 
 The B<sub()> function example on line B<#1> demonstrates replacing
 variables with expressions. The replacement specified for B<z> has no
@@ -2317,19 +2834,28 @@ Schilli, m@perlmeister.com, has proposed that substitutions for
 expressions should also be allowed, as in:
 
  $x/$y => $z
- 
+
 
 =head4 Solving equations: B<solve()>
 
+Example t/solve1.t
+
+ #!perl -w
+ #______________________________________________________________________
+ # Symbolic algebra: examples: simplify.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::Simple tests=>3;
+  
+ my ($x, $v, $t) = symbols(qw(x v t));
+ 
+ ok(   ($v eq $x / $t)->solve(qw(x in terms of v t))  ==  $v*$t  );      
+ ok(   ($v eq $x / $t)->solve(qw(x in terms of v t))  !=  $v/$t  );      
+ ok(   ($v eq $x / $t)->solve(qw(x in terms of v t)) <=> '$v*$t' );      
+ 
 
- ($x, $v, $t) = symbols(qw(x v t));
-
- $z = ($v eq $x / $t)->solve(qw(x in terms of v t)); #1
-
- print "x=$z\n";
-
- # x=$v*$t
 
 B<solve()> assumes that the equation on the left hand side is equal to
 zero, applies various simplifications, then attempts to rearrange the
@@ -2340,17 +2866,28 @@ the equation to be solved: the proposed solution is automatically tested
 against the original equation to check that the proposed solution
 removes these variables, an error is reported via B<die()> if it does not.
 
+Example t/solve.t
+
+ #!perl -w -I..
+ #______________________________________________________________________
+ # Symbolic algebra: quadratic equation.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
- use symbols;
-
+ use Test::Simple tests => 2;
+ 
  my ($x) = symbols(qw(x));
-
+ 
  my  $p = $x**2-5*$x+6;        # Quadratic polynomial
  my ($a, $b) = @{($p > $x )};  # Solve for x
-
+ 
  print "x=$a,$b\n";            # Roots
+ 
+ ok($a == 2);
+ ok($b == 3);
+ 
 
- # x=2,3
 
 If there are multiple solutions, (as in the case of polynomials), B<solve()>
 returns an array of symbolic expressions containing the solutions.
@@ -2359,15 +2896,26 @@ returns an array of symbolic expressions containing the solutions.
 
 =head4 Differentiation: B<d()>
 
+Example t/differentiation.t
+
+ #!perl -w -I..
+ #______________________________________________________________________
+ # Symbolic algebra.
+ # PhilipRBrenan@yahoo.com, 2004, Perl License.
+ #______________________________________________________________________
+ 
  use Math::Algebra::Symbols;
+ use Test::More tests => 5;
+ 
+ $x = symbols(qw(x));
+            
+ ok(  sin($x)    ==  sin($x)->d->d->d->d);
+ ok(  cos($x)    ==  cos($x)->d->d->d->d);
+ ok(  exp($x)    ==  exp($x)->d($x)->d('x')->d->d);
+ ok( (1/$x)->d   == -1/$x**2);
+ ok(  exp($x)->d->d->d->d <=> 'exp($x)' );
+ 
 
- ($x, $i) = S(qw(x i));
-
- $z = exp($x)->d->d('x')->d($x)->d();
-
- print "$z\n";
-
- # exp($x)
 
 B<d()> differentiates the equation on the left hand side by the named
 variable.
@@ -2381,45 +2929,7 @@ that symbol is used. If several symbols are present in the equation, but
 only one of B<t>, B<x>, B<y>, B<z> is present, then that variable is
 used in honor of Newton, Leibnitz, Cauchy.
 
-=head2 Examples
-
-=head3 Example Expressions
-
- use Math::Algebra::Symbols;
-
- ($a, $b, $x, $y, $i) = symbols(qw(a b x y i));
-
-   print $i x 1, "\n";              # Cross product
- # 1
-
-   print $i^1,   "\n";              # Dot product - different vectors
- # 0
-
-   print $i^$i,  "\n";              # Dot product - same vector
- # 1
-
-   print abs $i, "\n";              # Length of unit vector
- # 1
-
-   print ~($a+$b) == ~$a+~$b, "\n"; # Conjugation is distributive
- # 1                                  over addition
-
-   print ~($a*$b) == ~$a*~$b, "\n"; # Conjugation is distributive
- # 1                                  over multiplication
-
-   print ~($a**2) == (~$a)**2,"\n"; # Conjugation is distributive
- # 1                                  over power
-
-   print  abs(!($x+$y*$i))==1,"\n"; # Length of unit vector
- # 1
-
-   print                            # Length of product = product of lengths
-         abs($a+$i*$b)*abs($x+$i*$y) ==
-        abs(($a+$i*$b)*   ($x+$i*$y)), "\n";
- # 1  
-
-
-=head3 Example of Equation Solving: the focii of a hyperbola:
+=head2 Example of Equation Solving: the focii of a hyperbola:
 
  use Math::Algebra::Symbols;
  ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
@@ -2442,43 +2952,15 @@ This example demonstrates the power of symbolic processing by finding the
 focii of the curve B<y=1/x>, and incidentally, demonstrating that this curve
 is a hyperbola.
 
-=head3 Further Examples
-
- use Math::Algebra::Symbols;
-
- $x = symbols(qw(x));
-
- $x->test();
-
-The B<test()> method performs many tests which are useful in validating this package and as
-examples of the capabilities of this package.  These tests may also be run as:
-
- perl symbols.pm
- 
-
-=head1 EXPORT
+=head1 EXPORTS
 
  use Math::Algebra::Symbols
    symbols=>'S',
-   BigInt => 0,
    trig   => 1,
    hyper  => 1,
    complex=> 1;
 
 =over
-
-=item BigInt=>0
-
-The default - use regular perl numbers.
-
-=item BigInt=>1
-
-Use Perl L<Math::BigInt> to represent numbers.  
-
-=item symbols=>'name'
-
-Create a routine with this name in the caller's namespace to construct
-new symbols. The default is B<symbols>.
 
 =item trig=>0
 
@@ -2600,3 +3082,21 @@ Philip R Brenan at B<philiprbrenan@yahoo.com>
 
 
 
+
+
+=head2 Credits
+
+=head3 Author
+
+philiprbrenan@yahoo.com
+
+=head3 Copyright
+
+philiprbrenan@yahoo.com, 2004
+
+=head3 License
+
+Perl License.
+
+
+=cut

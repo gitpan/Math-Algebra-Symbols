@@ -1,8 +1,7 @@
 #!perl -w -I..
 #______________________________________________________________________
 # Symbolic algebra: quadratic equation.
-# Perl License.
-# PhilipRBrenan@yahoo.com, 2004.
+# PhilipRBrenan@yahoo.com, 2004, Perl License.
 #______________________________________________________________________
 
 use Test::More tests => 1;

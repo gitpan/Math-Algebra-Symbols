@@ -2,9 +2,9 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile
  (NAME		=> 'Math::Algebra::Symbols',
-  VERSION	=> '1.18',	
-  ABSTRACT=> 'Symbolic Algebra using Perl',
-  AUTHOR 	=> '\"Philip R Brenan\"<philiprbrenan@yahoo.com>',
+  VERSION	=> '1.20',	
+  ABSTRACT=> 'Symbolic Algebra in Pure Perl',
+  AUTHOR 	=> 'philiprbrenan@yahoo.com',
   PREREQ_PM => 
    {'Carp',     	 => '0',
     'Scalar::Util' => '0',

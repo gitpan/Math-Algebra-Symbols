@@ -1,19 +1,16 @@
-#!perl -w -I..
+#!perl -w
 #______________________________________________________________________
-# Symbolic algebra: quadratic equation.
+# Symbolic algebra: examples: simplification.
 # PhilipRBrenan@yahoo.com, 2004, Perl License.
 #______________________________________________________________________
 
 use Math::Algebra::Symbols;
-use Test::Simple tests => 2;
+use Test::Simple tests=>3;
 
 my ($x) = symbols(qw(x));
 
-my  $p = $x**2-5*$x+6;        # Quadratic polynomial
-my ($a, $b) = @{($p > $x )};  # Solve for x
+ok(  sin($x)**2 + cos($x)**2  ==  1  );
+ok(  sin($x)**2 + cos($x)**2  !=  0  );
+ok(  sin($x)**2 + cos($x)**2 <=> '1' );
 
-print "x=$a,$b\n";            # Roots
-
-ok($a == 2);
-ok($b == 3);
 

@@ -1,8 +1,7 @@
 #!perl -w -I..
 #______________________________________________________________________
 # Symbolic algebra: simple tests.
-# Perl License.
-# PhilipRBrenan@yahoo.com, 2004.
+# PhilipRBrenan@yahoo.com, 2004, Perl License.
 #______________________________________________________________________
 
 use Math::Algebra::Symbols;

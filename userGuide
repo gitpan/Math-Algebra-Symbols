@@ -1,0 +1,868 @@
+NAME
+    User guide.
+
+    Math::Algebra::Symbols - Symbolic Algebra in Pure Perl.
+
+SYNOPSIS
+    Example symbols.pl
+
+     #!perl -w -I..
+     #______________________________________________________________________
+     # Symbolic algebra.
+     # Perl License.
+     # PhilipRBrenan@yahoo.com, 2004.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols hyper=>1;
+     use Test::Simple tests=>5;
+ 
+     ($n, $x, $y) = symbols(qw(n x y));
+ 
+     $a     += ($x**8 - 1)/($x-1);
+     $b     +=  sin($x)**2 + cos($x)**2; 
+     $c     += (sin($n*$x) + cos($n*$x))->d->d->d->d / (sin($n*$x)+cos($n*$x));
+     $d      =  tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+     ($e,$f) =  @{($x**2 eq 5*$x-6) > $x};
+ 
+     print "$a\n$b\n$c\n$d\n$e,$f\n";
+ 
+     ok("$a"    eq '$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1');
+     ok("$b"    eq '1'); 
+     ok("$c"    eq '$n**4'); 
+     ok("$d"    eq '1'); 
+     ok("$e,$f" eq '2,3');
+ 
+DESCRIPTION
+    This package supplies a set of functions and operators to manipulate
+    operator expressions algebraically using the familiar Perl syntax.
+
+    These expressions are constructed from "Symbols", "Operators", and
+    "Functions", and processed via "Methods". For examples, see: "Examples".
+
+  Symbols
+    Symbols are created with the exported symbols() constructor routine:
+
+    Example t/constants.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: constants.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>1;
+ 
+     my ($x, $y, $i, $o, $pi) = symbols(qw(x y i 1 pi));
+ 
+     ok( "$x $y $i $o $pi"   eq   '$x $y i 1 $pi'  );
+ 
+    The symbols() routine constructs references to symbolic variables and
+    symbolic constants from a list of names and integer constants.
+
+    The special symbol i is recognized as the square root of -1.
+
+    The special symbol pi is recognized as the smallest positive real that
+    satisfies:
+
+    Example t/ipi.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: constants.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>2;
+ 
+     my ($i, $pi) = symbols(qw(i pi));
+ 
+     ok(  exp($i*$pi)  ==   -1  );
+     ok(  exp($i*$pi) <=>  '-1' );
+ 
+   Constructor Routine Name
+    If you wish to use a different name for the constructor routine, say S:
+
+    Example t/ipi2.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: constants.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols symbols=>'S';
+     use Test::Simple tests=>2;
+ 
+     my ($i, $pi) = S(qw(i pi));
+ 
+     ok(  exp($i*$pi)  ==   -1  );
+     ok(  exp($i*$pi) <=>  '-1' );
+
+   Big Integers
+    Symbols automatically uses big integers if needed.
+
+    Example t/bigInt.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: bigInt.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>1;
+ 
+     my $z = symbols('1234567890987654321/1234567890987654321');
+ 
+     ok( eval $z eq '1');
+ 
+  Operators
+    "Symbols" can be combined with "Operators" to create symbolic
+    expressions:
+
+   Arithmetic operators
+   Arithmetic Operators: + - * / **
+    Example t/x2y2.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: simplification.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+ 
+     my ($x, $y) = symbols(qw(x y));
+ 
+     ok(  ($x**2-$y**2)/($x-$y)  ==  $x+$y  );
+     ok(  ($x**2-$y**2)/($x-$y)  !=  $x-$y  );
+     ok(  ($x**2-$y**2)/($x-$y) <=> '$x+$y' );
+ 
+    The operators: += -= *= /= are overloaded to work symbolically rather
+    than numerically. If you need numeric results, you can always eval() the
+    resulting symbolic expression.
+
+   Square root Operator: sqrt
+    Example t/ix.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: sqrt(-1).
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>2;
+ 
+     my ($x, $i) = symbols(qw(x i));
+ 
+     ok(  sqrt(-$x**2)  ==  $i*$x  );
+     ok(  sqrt(-$x**2)  <=> 'i*$x' );
+ 
+    The square root is represented by the symbol i, which allows complex
+    expressions to be processed by Math::Complex.
+
+   Exponential Operator: exp
+    Example t/expd.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: exp.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>2;
+ 
+     my ($x, $i) = symbols(qw(x i));
+ 
+     ok(   exp($x)->d($x)  ==   exp($x)  );
+     ok(   exp($x)->d($x) <=>  'exp($x)' );
+ 
+    The exponential operator.
+
+   Logarithm Operator: log
+    Example t/logExp.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: log: need better example.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>1;
+ 
+     my ($x) = symbols(qw(x));
+ 
+     ok(   log($x) <=>  'log($x)' );
+ 
+    Logarithm to base e.
+
+    Note: the above result is only true for x > 0. Symbols does not include
+    domain and range specifications of the functions it uses.
+
+   Sine and Cosine Operators: sin and cos
+    Example t/sinCos.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: simplification.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+ 
+     my ($x) = symbols(qw(x));
+ 
+     ok(  sin($x)**2 + cos($x)**2  ==  1  );
+     ok(  sin($x)**2 + cos($x)**2  !=  0  );
+     ok(  sin($x)**2 + cos($x)**2 <=> '1' );
+ 
+    This famous trigonometric identity is not preprogrammed into Symbols as
+    it is in commercial products.
+
+    Instead: an expression for sin() is constructed using the complex
+    exponential: "exp", said expression is algebraically multiplied out to
+    prove the identity. The proof steps involve large intermediate
+    expressions in each step, as yet I have not provided a means to neatly
+    lay out these intermediate steps and thus provide a more compelling
+    demonstration of the ability of Symbols to verify such statements from
+    first principles.
+
+   Relational operators
+   Relational operators: ==, !=
+    Example t/x2y2.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: simplification.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+ 
+     my ($x, $y) = symbols(qw(x y));
+ 
+     ok(  ($x**2-$y**2)/($x-$y)  ==  $x+$y  );
+     ok(  ($x**2-$y**2)/($x-$y)  !=  $x-$y  );
+     ok(  ($x**2-$y**2)/($x-$y) <=> '$x+$y' );
+ 
+    The relational equality operator == compares two symbolic expressions
+    and returns TRUE(1) or FALSE(0) accordingly. != produces the opposite
+    result.
+
+   Relational operator: eq
+    Example t/eq.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: solving.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+ 
+     my ($x, $v, $t) = symbols(qw(x v t));
+ 
+     ok(  ($v eq $x / $t)->solve(qw(x in terms of v t))  ==  $v*$t  );
+     ok(  ($v eq $x / $t)->solve(qw(x in terms of v t))  !=  $v+$t  );
+     ok(  ($v eq $x / $t)->solve(qw(x in terms of v t)) <=> '$v*$t' );
+ 
+    The relational operator eq is a synonym for the minus - operator, with
+    the expectation that later on the solve() function will be used to
+    simplify and rearrange the equation. You may prefer to use eq instead of
+    - to enhance readability, there is no functional difference.
+
+   Complex operators
+   Complex operators: the dot operator: ^
+    Example t/dot.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: dot operator.  Note the low priority
+     # of the ^ operator.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+ 
+     my ($a, $b, $i) = symbols(qw(a b i));
+ 
+     ok(  (($a+$i*$b)^($a-$i*$b))  ==  $a**2-$b**2  );
+     ok(  (($a+$i*$b)^($a-$i*$b))  !=  $a**2+$b**2  );
+     ok(  (($a+$i*$b)^($a-$i*$b)) <=> '$a**2-$b**2' );
+ 
+    Note the use of brackets. The ^ operator has low priority.
+
+    The ^ operator treats its left hand and right hand arguments as complex
+    numbers, which in turn are regarded as two dimensional vectors to which
+    the vector dot product is applied.
+
+   Complex operators: the cross operator: x
+    Example t/cross.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: cross operator.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+ 
+     my ($x, $i) = symbols(qw(x i));
+ 
+     ok(  $i*$x x $x  ==  $x**2  );
+     ok(  $i*$x x $x  !=  $x**3  );
+     ok(  $i*$x x $x <=> '$x**2' );
+ 
+    The x operator treats its left hand and right hand arguments as complex
+    numbers, which in turn are regarded as two dimensional vectors defining
+    the sides of a parallelogram. The x operator returns the area of this
+    parallelogram.
+
+    Note the space before the x, otherwise Perl is unable to disambiguate
+    the expression correctly.
+
+   Complex operators: the conjugate operator: ~
+    Example t/conjugate.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: dot operator.  Note the low priority
+     # of the ^ operator.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+ 
+     my ($x, $y, $i) = symbols(qw(x y i));
+ 
+     ok(  ~($x+$i*$y)  ==  $x-$i*$y  );
+     ok(  ~($x-$i*$y)  ==  $x+$i*$y  );
+     ok(  (($x+$i*$y)^($x-$i*$y)) <=> '$x**2-$y**2' );
+ 
+    The ~ operator returns the complex conjugate of its right hand side.
+
+   Complex operators: the modulus operator: abs
+    Example t/abs.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: dot operator.  Note the low priority
+     # of the ^ operator.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+ 
+     my ($x, $i) = symbols(qw(x i));
+ 
+     ok(  abs($x+$i*$x)  ==  sqrt(2*$x**2)  );
+     ok(  abs($x+$i*$x)  !=  sqrt(2*$x**3)  );
+     ok(  abs($x+$i*$x) <=> 'sqrt(2*$x**2)' );
+ 
+    The abs operator returns the modulus (length) of its right hand side.
+
+   Complex operators: the unit operator: !
+    Example t/unit.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: unit operator.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>4;
+ 
+     my ($i) = symbols(qw(i));
+ 
+     ok(  !$i      == $i                         );
+     ok(  !$i     <=> 'i'                        );
+     ok(  !($i+1) <=>  '1/(sqrt(2))+i/(sqrt(2))' );
+     ok(  !($i-1) <=> '-1/(sqrt(2))+i/(sqrt(2))' );
+ 
+    The ! operator returns a complex number of unit length pointing in the
+    same direction as its right hand side.
+
+   Equation Manipulation Operators
+   Equation Manipulation Operators: Simplify operator: +=
+    Example t/simplify.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: simplify.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>2;
+  
+     my ($x) = symbols(qw(x));
+ 
+     ok(  ($x**8 - 1)/($x-1)  ==  $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1  );      
+     ok(  ($x**8 - 1)/($x-1) <=> '$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1' );      
+ 
+    The simplify operator += is a synonym for the simplify() method, if and
+    only if, the target on the left hand side initially has a value of
+    undef.
+
+    Admittedly this is very strange behavior: it arises due to the shortage
+    of over-rideable operators in Perl: in particular it arises due to the
+    shortage of over-rideable unary operators in Perl. Never-the-less: this
+    operator is useful as can be seen in the Synopsis, and the desired
+    pre-condition can always achieved by using my.
+
+   Equation Manipulation Operators: Solve operator: >
+    Example t/solve2.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: simplify.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>2;
+  
+     my ($t) = symbols(qw(t));
+ 
+     my $rabbit  = 10 + 5 * $t;
+     my $fox     = 7 * $t * $t;
+     my ($a, $b) = @{($rabbit eq $fox) > $t};
+ 
+     ok( "$a" eq  '1/14*sqrt(305)+5/14'  );      
+     ok( "$b" eq '-1/14*sqrt(305)+5/14'  );      
+ 
+    The solve operator > is a synonym for the solve() method.
+
+    The priority of > is higher than that of eq, so the brackets around the
+    equation to be solved are necessary until Perl provides a mechanism for
+    adjusting operator priority (cf. Algol 68).
+
+    If the equation is in a single variable, the single variable may be
+    named after the > operator without the use of [...]:
+
+     use Math::Algebra::Symbols;
+
+     my $rabbit  = 10 + 5 * $t;
+     my $fox     = 7 * $t * $t;
+     my ($a, $b) = @{($rabbit eq $fox) > $t};
+
+     print "$a\n";
+
+     # 1/14*sqrt(305)+5/14
+
+    If there are multiple solutions, (as in the case of polynomials), >
+    returns an array of symbolic expressions containing the solutions.
+
+    This example was provided by Mike Schilli m@perlmeister.com.
+
+  Functions
+    Perl operator overloading is very useful for producing compact
+    representations of algebraic expressions. Unfortunately there are only a
+    small number of operators that Perl allows to be overloaded. The
+    following functions are used to provide capabilities not easily
+    expressed via Perl operator overloading.
+
+    These functions may either be called as methods from symbols constructed
+    by the "Symbols" construction routine, or they may be exported into the
+    user's namespace as described in "EXPORT".
+
+   Trigonometric and Hyperbolic functions
+   Trigonometric functions
+    Example t/sinCos2.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: methods.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>1;
+ 
+     my ($x, $y) = symbols(qw(x y));
+ 
+     ok( (sin($x)**2 == (1-cos(2*$x))/2) );
+ 
+    The trigonometric functions cos, sin, tan, sec, csc, cot are available,
+    either as exports to the caller's name space, or as methods.
+
+   Hyperbolic functions
+    Example t/tanh.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: methods.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols hyper=>1;
+     use Test::Simple tests=>1;
+ 
+     my ($x, $y) = symbols(qw(x y));
+ 
+     ok( tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y)));
+ 
+    The hyperbolic functions cosh, sinh, tanh, sech, csch, coth are
+    available, either as exports to the caller's name space, or as methods.
+
+   Complex functions
+   Complex functions: re and im
+     use Math::Algebra::Symbols complex=>1;
+
+    Example t/reIm.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: methods.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>2;
+ 
+     my ($x, $i) = symbols(qw(x i));
+ 
+     ok( ($i*$x)->re   <=>  0    );
+     ok( ($i*$x)->im   <=>  '$x' );
+ 
+    The re and im functions return an expression which represents the real
+    and imaginary parts of the expression, assuming that symbolic variables
+    represent real numbers.
+
+   Complex functions: dot and cross
+    Example t/dotCross.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: methods.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>2;
+ 
+     my $i = symbols(qw(i));
+ 
+     ok( ($i+1)->cross($i-1)   <=>  2 );
+     ok( ($i+1)->dot  ($i-1)   <=>  0 );
+ 
+    The dot and cross operators are available as functions, either as
+    exports to the caller's name space, or as methods.
+
+   Complex functions: conjugate, modulus and unit
+    Example t/conjugate2.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: methods.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+ 
+     my $i = symbols(qw(i));
+ 
+     ok( ($i+1)->unit      <=>  '1/(sqrt(2))+i/(sqrt(2))' );
+     ok( ($i+1)->modulus   <=>  'sqrt(2)'                 );
+     ok( ($i+1)->conjugate <=>  '1-i'                     );
+ 
+    The conjugate, abs and unit operators are available as functions:
+    conjugate, modulus and unit, either as exports to the caller's name
+    space, or as methods. The confusion over the naming of: the abs operator
+    being the same as the modulus complex function; arises over the limited
+    set of Perl operator names available for overloading.
+
+  Methods
+   Methods for manipulating Equations
+   Simplifying equations: simplify()
+    Example t/simplify2.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: simplify.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>2;
+  
+     my ($x) = symbols(qw(x));
+  
+     my $y  = (($x**8 - 1)/($x-1))->simplify();  # Simplify method 
+     my $z +=  ($x**8 - 1)/($x-1);               # Simplify via +=
+ 
+     ok( "$y" eq '$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1' );
+     ok( "$z" eq '$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1' );
+ 
+    Simplify() attempts to simplify an expression. There is no general
+    simplification algorithm: consequently simplifications are carried out
+    on ad hoc basis. You may not even agree that the proposed simplification
+    for a given expressions is indeed any simpler than the original. It is
+    for these reasons that simplification has to be explicitly requested
+    rather than being performed automagically.
+
+    At the moment, simplifications consist of polynomial division: when the
+    expression consists, in essence, of one polynomial divided by another,
+    an attempt is made to perform polynomial division, the result is
+    returned if there is no remainder.
+
+    The += operator may be used to simplify and assign an expression to a
+    Perl variable. Perl operator overloading precludes the use of = in this
+    manner.
+
+   Substituting into equations: sub()
+    Example t/sub.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: expression substitution for a variable.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>2;
+ 
+     my ($x, $y) = symbols(qw(x y));
+  
+     my $e  = 1+$x+$x**2/2+$x**3/6+$x**4/24+$x**5/120;
+ 
+     ok(  $e->sub(x=>$y**2, z=>2)  <=> '$y**2+1/2*$y**4+1/6*$y**6+1/24*$y**8+1/120*$y**10+1'  );
+     ok(  $e->sub(x=>1)            <=>  '163/60');          
+ 
+    The sub() function example on line #1 demonstrates replacing variables
+    with expressions. The replacement specified for z has no effect as z is
+    not present in this equation.
+
+    Line #2 demonstrates the resulting rational fraction that arises when
+    all the variables have been replaced by constants. This package does not
+    convert fractions to decimal expressions in case there is a loss of
+    accuracy, however:
+
+     $e3 =~ /^(\d+)\/(\d+)$/;
+     $result = $1/$2;
+
+    or similar will produce approximate results.
+
+    At the moment only variables can be replaced by expressions. Mike
+    Schilli, m@perlmeister.com, has proposed that substitutions for
+    expressions should also be allowed, as in:
+
+     $x/$y => $z
+
+   Solving equations: solve()
+    Example t/solve1.t
+
+     #!perl -w
+     #______________________________________________________________________
+     # Symbolic algebra: examples: simplify.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests=>3;
+  
+     my ($x, $v, $t) = symbols(qw(x v t));
+ 
+     ok(   ($v eq $x / $t)->solve(qw(x in terms of v t))  ==  $v*$t  );      
+     ok(   ($v eq $x / $t)->solve(qw(x in terms of v t))  !=  $v/$t  );      
+     ok(   ($v eq $x / $t)->solve(qw(x in terms of v t)) <=> '$v*$t' );      
+ 
+    solve() assumes that the equation on the left hand side is equal to
+    zero, applies various simplifications, then attempts to rearrange the
+    equation to obtain an equation for the first variable in the parameter
+    list assuming that the other terms mentioned in the parameter list are
+    known constants. There may of course be other unknown free variables in
+    the equation to be solved: the proposed solution is automatically tested
+    against the original equation to check that the proposed solution
+    removes these variables, an error is reported via die() if it does not.
+
+    Example t/solve.t
+
+     #!perl -w -I..
+     #______________________________________________________________________
+     # Symbolic algebra: quadratic equation.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::Simple tests => 2;
+ 
+     my ($x) = symbols(qw(x));
+ 
+     my  $p = $x**2-5*$x+6;        # Quadratic polynomial
+     my ($a, $b) = @{($p > $x )};  # Solve for x
+ 
+     print "x=$a,$b\n";            # Roots
+ 
+     ok($a == 2);
+     ok($b == 3);
+ 
+    If there are multiple solutions, (as in the case of polynomials),
+    solve() returns an array of symbolic expressions containing the
+    solutions.
+
+   Methods for performing Calculus
+   Differentiation: d()
+    Example t/differentiation.t
+
+     #!perl -w -I..
+     #______________________________________________________________________
+     # Symbolic algebra.
+     # PhilipRBrenan@yahoo.com, 2004, Perl License.
+     #______________________________________________________________________
+ 
+     use Math::Algebra::Symbols;
+     use Test::More tests => 5;
+ 
+     $x = symbols(qw(x));
+            
+     ok(  sin($x)    ==  sin($x)->d->d->d->d);
+     ok(  cos($x)    ==  cos($x)->d->d->d->d);
+     ok(  exp($x)    ==  exp($x)->d($x)->d('x')->d->d);
+     ok( (1/$x)->d   == -1/$x**2);
+     ok(  exp($x)->d->d->d->d <=> 'exp($x)' );
+ 
+    d() differentiates the equation on the left hand side by the named
+    variable.
+
+    The variable to be differentiated by may be explicitly specified, either
+    as a string or as single symbol; or it may be heuristically guessed as
+    follows:
+
+    If the equation to be differentiated refers to only one symbol, then
+    that symbol is used. If several symbols are present in the equation, but
+    only one of t, x, y, z is present, then that variable is used in honor
+    of Newton, Leibnitz, Cauchy.
+
+  Example of Equation Solving: the focii of a hyperbola:
+     use Math::Algebra::Symbols;
+     ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
+
+     print
+     "Hyperbola: Constant difference between distances from focii to locus of y=1/x",
+     "\n  Assume by symmetry the focii are on ",
+     "\n    the line y=x:                     ",  $f1 = $x + $i * $x,
+     "\n  and equidistant from the origin:    ",  $f2 = -$f1,
+     "\n  Choose a convenient point on y=1/x: ",  $a = $o+$i,
+     "\n        and a general point on y=1/x: ",  $b = $y+$i/$y,
+     "\n  Difference in distances from focii",
+     "\n    From convenient point:            ",  $A = abs($a - $f2) - abs($a - $f1),  
+     "\n    From general point:               ",  $B = abs($b - $f2) + abs($b - $f1),
+     "\n\n  Solving for x we get:            x=", ($A - $B) > $x,
+     "\n                         (should be: sqrt(2))",                        
+     "\n  Which is indeed constant, as was to be demonstrated\n";
+
+    This example demonstrates the power of symbolic processing by finding
+    the focii of the curve y=1/x, and incidentally, demonstrating that this
+    curve is a hyperbola.
+
+EXPORTS
+     use Math::Algebra::Symbols
+       symbols=>'S',
+       trig   => 1,
+       hyper  => 1,
+       complex=> 1;
+
+    trig=>0
+        The default, do not export trigonometric functions.
+
+    trig=>1
+        Export trigonometric functions: tan, sec, csc, cot to the caller's
+        namespace. sin, cos are created by default by overloading the
+        existing Perl sin and cos operators.
+
+    trigonometric
+        Alias of trig
+
+    hyperbolic=>0
+        The default, do not export hyperbolic functions.
+
+    hyper=>1
+        Export hyperbolic functions: sinh, cosh, tanh, sech, csch, coth to
+        the caller's namespace.
+
+    hyperbolic
+        Alias of hyper
+
+    complex=>0
+        The default, do not export complex functions
+
+    complex=>1
+        Export complex functions: conjugate, cross, dot, im, modulus, re,
+        unit to the caller's namespace.
+
+PACKAGES
+    The Symbols packages manipulate a sum of products representation of an
+    algebraic equation. The Symbols package is the user interface to the
+    functionality supplied by the SymbolsSum and SymbolsTerm packages.
+
+  Math::Algebra::SymbolsTerm
+    SymbolsTerm represents a product term. A product term consists of the
+    number 1, optionally multiplied by:
+
+    Variables
+        any number of variables raised to integer powers,
+
+    Coefficient
+        An integer coefficient optionally divided by a positive integer
+        divisor, both represented as BigInts if necessary.
+
+    Sqrt
+        The sqrt of of any symbolic expression representable by the Symbols
+        package, including minus one: represented as i.
+
+    Reciprocal
+        The multiplicative inverse of any symbolic expression representable
+        by the Symbols package: i.e. a SymbolsTerm may be divided by any
+        symbolic expression representable by the Symbols package.
+
+    Exp The number e raised to the power of any symbolic expression
+        representable by the Symbols package.
+
+    Log The logarithm to base e of any symbolic expression representable by
+        the Symbols package.
+
+    Thus SymbolsTerm can represent expressions like:
+
+      2/3*$x**2*$y**-3*exp($i*$pi)*sqrt($z**3) / $x
+
+    but not:
+
+      $x + $y
+
+    for which package SymbolsSum is required.
+
+  Math::Algebra::SymbolsSum
+    SymbolsSum represents a sum of product terms supplied by SymbolsTerm and
+    thus behaves as a polynomial. Operations such as equation solving and
+    differentiation are applied at this level.
+
+    The main benefit of programming SymbolsTerm and SymbolsSum as two
+    separate but related packages is Object Oriented Polymorphism. I.e. both
+    packages need to multiply items together: each package has its own
+    multiply method, with Perl method lookup selecting the appropriate one
+    as required.
+
+  Math::Algebra::Symbols
+    Packaging the user functionality alone and separately in package Symbols
+    allows the internal functions to be conveniently hidden from user
+    scripts.
+
+AUTHOR
+    Philip R Brenan at philiprbrenan@yahoo.com
+

@@ -1,32 +1,41 @@
-Math::Algebra::Symbols
-    Symbolic Algebra using Perl.
-
-    Copyright Philip R Brenan, 2004
+README: Math::Algebra::Symbols
+    Symbolic Algebra in Pure Perl
 
     This package supplies a set of functions and operators to manipulate
     Perl expressions algebraically:
 
+    Example symbols.pl
+
+     #!perl -w -I..
+     #______________________________________________________________________
+     # Symbolic algebra.
+     # Perl License.
+     # PhilipRBrenan@yahoo.com, 2004.
+     #______________________________________________________________________
+ 
      use Math::Algebra::Symbols hyper=>1;
-
-     my ($n, $x, $y) = symbols(qw(n x y));
-
-     my  $a    += ($x**8 - 1)/($x-1);
-     my  $b    +=  sin($x)**2 + cos($x)**2; 
-     my  $c    += (sin($n*$x) + cos($n*$x))->d->d->d->d / (sin($n*$x)+cos($n*$x));
-     my  $d     =  tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
-     my ($e,$f) =  @{($x**2 eq 5*$x-6) > $x};
-
+     use Test::Simple tests=>5;
+ 
+     ($n, $x, $y) = symbols(qw(n x y));
+ 
+     $a     += ($x**8 - 1)/($x-1);
+     $b     +=  sin($x)**2 + cos($x)**2; 
+     $c     += (sin($n*$x) + cos($n*$x))->d->d->d->d / (sin($n*$x)+cos($n*$x));
+     $d      =  tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+     ($e,$f) =  @{($x**2 eq 5*$x-6) > $x};
+ 
      print "$a\n$b\n$c\n$d\n$e,$f\n";
-
-     # $x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1
-     # 1
-     # $n**4
-     # 1
-     # 2,3
-
+ 
+     ok("$a"    eq '$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7+1');
+     ok("$b"    eq '1'); 
+     ok("$c"    eq '$n**4'); 
+     ok("$d"    eq '1'); 
+     ok("$e,$f" eq '2,3');
+ 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
 
+INSTALL
     This is alpha code. It is written in pure Perl. It uses the standard
     Perl install mechanism.
 
@@ -45,10 +54,34 @@ Math::Algebra::Symbols
     Following the excellent work done by Steffen Müller (CPAN Author:
     SMUELLER), I believe that we should try to capture all known Mathematics
     symbolically in Perl. Indeed, can you say that you know any Mathematics
-    at all if you cannot explain it in Perl?
-
-    Help with this project would be appreciated.
+    at all if you cannot explain it in Pure Perl?
 
     For bug reports or suggestions please send email to:
     philiprbrenan@yahoo.com
+
+TO DO
+    Help with this project would be appreciated:
+
+    Allow substitution and solution for simple expressions like
+    miles/gallon.
+
+    Recognize sin, cos, sinh, cosh etc. in expressions involving exp.
+
+    Sigma,Product
+
+    Taylor series
+
+    Integrals
+
+    Fourier
+
+    Laplace
+
+    Groups
+
+    Sets
+
+    Graphing using Tk.
+
+    normalizeSqrts(), see t/polynomial.t
 
