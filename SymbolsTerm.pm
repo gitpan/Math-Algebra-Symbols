@@ -10,11 +10,12 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsTerm;
-$VERSION = 1.12;
+$VERSION = 1.13;
 
 use Carp;
 use Math::BigInt;  
 use Hash::Util qw(lock_hash); 
+use Scalar::Util qw(weaken);
 
 #_ Term _________________________________________________________________
 # Greatest Common Divisor.
@@ -820,8 +821,9 @@ sub z($)
   !exists($t->{z}) or die "Already finalized this term";
   
   my $p  = $t->print;
-  return $z{$p} if exists $z{$p};
+  return $z{$p} if defined($z{$p});
   $z{$p} = $t;
+  weaken($z{$p}); # Greatly reduces memory usage
 
   $t->{s}  = $p;
   $t->{z}  = $t->signature;
@@ -832,10 +834,10 @@ sub z($)
   $t;
  }
 
-sub DESTROY($)
- {my ($t) = @_;
-  delete $z{$t->{s}} if exists $t->{s};
- } 
+#sub DESTROY($)
+# {my ($t) = @_;
+#  delete $z{$t->{s}} if defined($t) and exists $t->{s};
+# } 
 
 sub lockHashes() 
  {my ($l) = @_;

@@ -6,12 +6,13 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsSum;
-$VERSION = 1.12;
+$VERSION = 1.13;
 
 use Math::Algebra::SymbolsTerm;
 use IO::Handle;
 use Carp;
 use Hash::Util qw(lock_hash);
+use Scalar::Util qw(weaken);
 sub factorize($); 
 
 #_ Sum __________________________________________________________________
@@ -207,12 +208,15 @@ sub multiply($$)
 
 # Exp    
       $a->Exp($a{e} ? $a{e} : $b{e})        if $a{e} xor $b{e};
-      my $e = 0;
+#     my $e = 0;
+      my $e;
       if ($a{e} and $b{e})
        {my $s = $a{e}->add($b{e});
-        $e = $s->st;
-        $e = $e->exp2 if     $e;
-        $a->Exp($s)   unless $e;
+        $e = $s->st;                      # Check for single term
+#       $e = $e->exp2 if     $e;
+#       $a->Exp($s)   unless $e;
+        $e = $e->exp2 if     defined($e); # Simplify single term if possible
+        $a->Exp($s)   unless defined($e); # Reinstate Exp as sum of terms if no simplification possible 
        }
 # Log    
       $a->Log($a{l} ? $a{l} : $b{l})        if $a{l} xor $b{l};
@@ -222,7 +226,8 @@ sub multiply($$)
       $a = $a->z;
       $b = $b->z;
       $a = $a->multiply($b);
-      $a = $a->multiply($e) if $e;
+#     $a = $a->multiply($e) if $e;           # Was failing when 0
+      $a = $a->multiply($e) if defined($e);
       $a or die "Bad multiply";
      
       push @t, $a                         unless $s;
@@ -1086,8 +1091,9 @@ sub z($)
   !exists($t->{z}) or die "Already finalized this term";
   
   my $p  = $t->print;
-  return $z{$p} if exists $z{$p};
+  return $z{$p} if defined($z{$p});
   $z{$p} = $t;
+  weaken($z{$p}); # Reduces memory usage.
 
   $t->{s}  = $p;
   $t->{z}  = $t->signature;
@@ -1098,10 +1104,10 @@ sub z($)
   $t;
  }
 
-sub DESTROY($)
- {my ($t) = @_;
-  delete $z{$t->{s}} if exists $t->{s};
- } 
+#sub DESTROY($)
+# {my ($t) = @_;
+#  delete $z{$t->{s}} if defined($t) and exists $t->{s};
+# } 
 
 sub lockHashes() 
  {my ($l) = @_;
@@ -1427,6 +1433,7 @@ sub equals3
   return 1 if $a->{id} == $b->{id}; # Fast equals
 
   my $c = $a->subtract($b);
+
   return 1 if $c->isZero()->{id} == $zero->{id};
   return 0;
 

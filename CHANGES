@@ -1,3 +1,20 @@
+    2004/04/24 1.13 Memory Leak and Exp problems solved:
+
+    1. Solved a memory leak by using Scalar::Util::weaken(). This has
+    reduced memory consumption when running the test cases from 130M to 37M:
+    intermediate expressions are now being freed. I believe that this has
+    been the source of the erratic failures appearing on various platforms
+    other than my development system, as reported (most helpfully) by CPAN
+    testers and an Mac OSX user, which appear to have been running out of
+    memory.
+
+    2. Corrected exp(-i)*exp(-i) which was being correctly reduced to
+    exp(0), but should have been reduced further to 1, which was causing the
+    multiply out of exp(i...) in cot(x) == 1/tan(x) to fail erratically.
+
+    2004/04/24 1.12 Included PREREQ_PM in Makefile as a result of notes from
+    automated CPAN testing.
+
     2004/04/24 1.08 Included test cases in manifest.
 
     2004/03/28 Split into three classes. Considerable performance
