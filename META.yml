@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:     Math-Algebra-Symbols
-version:  1.20
+version:  1.21
 abstract: Symbolic Algebra in Pure Perl
 license:  perl
 distribution_type: module

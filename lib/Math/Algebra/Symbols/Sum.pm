@@ -1,6 +1,6 @@
 #!perl -w
 
-=head1 SymbolsSums
+=head1 Sums
 
 Symbolic Algebra using Pure Perl: sums.
 
@@ -14,13 +14,12 @@ PhilipRBrenan@yahoo.com, 2004, Perl License.
 
 
 package Math::Algebra::Symbols::Sum;
-$VERSION=1.20;
+$VERSION=1.21;
 use Math::Algebra::Symbols::Term;
 use IO::Handle;
 use Carp;
 #HashUtil use Hash::Util qw(lock_hash);
 use Scalar::Util qw(weaken);
-sub factorize($); 
 
 
 =head2 Constructors
@@ -466,7 +465,7 @@ Normalize sqrts in a sum.
 
 This routine needs fixing.
 
-Its ment to simplify square roots.
+It should simplify square roots.
 
 =cut
 
@@ -1228,7 +1227,7 @@ sub Sin($)
  }
 
 
-=head3 cos
+=head3 Cos
 
 Cosine of a sum
 
@@ -1248,9 +1247,9 @@ sub Cos($)
  }
 
 
-=head3 Tan, Sec, Csc, Cot
+=head3 tan, Ssc, csc, cot
 
-Tan, Sec, Csc, Cot of a sum
+Tan, sec, csc, cot of a sum
 
 =cut
 
@@ -1848,9 +1847,9 @@ sub nequal3
 
 =head3 tequals
 
-Evaluate the expression on the left hand side, stringify iy, and then
+Evaluate the expression on the left hand side, stringify it, then
 compare it for string equality with the string on the right hand side.
-This opertor is useful for making examples written with Test::Simple
+This operator is useful for making examples written with Test::Simple
 more readable.
 
 =cut
@@ -2066,9 +2065,9 @@ __DATA__
 
 =head1 NAME
 
-User guide.
-
 Math::Algebra::Symbols - Symbolic Algebra in Pure Perl.
+
+User guide.
 
 =head1 SYNOPSIS
 
@@ -2420,7 +2419,7 @@ Example t/dot.t
  
 
 
-Note the use of brackets.  The B<^> operator has low priority.
+Note the use of brackets:  The B<^> operator has low priority.
 
 The B<^> operator treats its left hand and right hand arguments as
 complex numbers, which in turn are regarded as two dimensional vectors
@@ -2824,8 +2823,8 @@ all the variables have been replaced by constants. This package does not
 convert fractions to decimal expressions in case there is a loss of
 accuracy, however:
 
- $e3 =~ /^(\d+)\/(\d+)$/;
- $result = $1/$2;
+ my $e2 = $e->sub(x=>1);
+ $result = eval "$e2";
 
 or similar will produce approximate results.
 
@@ -2932,7 +2931,8 @@ used in honor of Newton, Leibnitz, Cauchy.
 =head2 Example of Equation Solving: the focii of a hyperbola:
 
  use Math::Algebra::Symbols;
- ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
+
+ my ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
 
  print
  "Hyperbola: Constant difference between distances from focii to locus of y=1/x",
@@ -3002,13 +3002,14 @@ B<modulus>, B<re>, B<unit> to the caller's namespace.
 
 =head1 PACKAGES
 
-The Symbols packages manipulate a sum of products representation of an
-algebraic equation. The B<Symbols> package is the user interface to the
-functionality supplied by the B<SymbolsSum> and B<SymbolsTerm> packages.
+The B<Symbols> packages manipulate a sum of products representation of
+an algebraic equation. The B<Symbols> package is the user interface to
+the functionality supplied by the B<Symbols::Sum> and B<Symbols::Term>
+packages.
 
-=head2 Math::Algebra::SymbolsTerm
+=head2 Math::Algebra::Symbols::Term
 
-B<SymbolsTerm> represents a product term. A product term consists of the
+B<Symbols::Term> represents a product term. A product term consists of the
 number B<1>, optionally multiplied by:
 
 =over
@@ -3053,16 +3054,16 @@ but not:
 
   $x + $y
 
-for which package B<SymbolsSum> is required. 
+for which package B<Symbols::Sum> is required. 
 
 
-=head2 Math::Algebra::SymbolsSum
+=head2 Math::Algebra::Symbols::Sum
 
-B<SymbolsSum> represents a sum of product terms supplied by
-B<SymbolsTerm> and thus behaves as a polynomial. Operations such as
+B<Symbols::Sum> represents a sum of product terms supplied by
+B<Symbols::Term> and thus behaves as a polynomial. Operations such as
 equation solving and differentiation are applied at this level.
 
-The main benefit of programming B<SymbolsTerm> and B<SymbolsSum> as two
+The main benefit of programming B<Symbols::Term> and B<Symbols::Sum> as two
 separate but related packages is Object Oriented Polymorphism. I.e. both
 packages need to multiply items together: each package has its own B<multiply> method,
 with Perl method lookup selecting the appropriate one as required. 

@@ -9,13 +9,13 @@ PhilipRBrenan@yahoo.com, 2004, Perl License.
 
 =head2 Synopsis
 
-This package delivers the public components of package sum.
+This package delivers the public components of package B<sum>.
 
 =cut
 
 
 package Math::Algebra::Symbols;
-$VERSION=1.20;
+$VERSION=1.21;
 use Math::Algebra::Symbols::Sum;
 use Carp;
 
@@ -228,9 +228,9 @@ __DATA__
 
 =head1 NAME
 
-User guide.
-
 Math::Algebra::Symbols - Symbolic Algebra in Pure Perl.
+
+User guide.
 
 =head1 SYNOPSIS
 
@@ -582,7 +582,7 @@ Example t/dot.t
  
 
 
-Note the use of brackets.  The B<^> operator has low priority.
+Note the use of brackets:  The B<^> operator has low priority.
 
 The B<^> operator treats its left hand and right hand arguments as
 complex numbers, which in turn are regarded as two dimensional vectors
@@ -986,8 +986,8 @@ all the variables have been replaced by constants. This package does not
 convert fractions to decimal expressions in case there is a loss of
 accuracy, however:
 
- $e3 =~ /^(\d+)\/(\d+)$/;
- $result = $1/$2;
+ my $e2 = $e->sub(x=>1);
+ $result = eval "$e2";
 
 or similar will produce approximate results.
 
@@ -1094,7 +1094,8 @@ used in honor of Newton, Leibnitz, Cauchy.
 =head2 Example of Equation Solving: the focii of a hyperbola:
 
  use Math::Algebra::Symbols;
- ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
+
+ my ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
 
  print
  "Hyperbola: Constant difference between distances from focii to locus of y=1/x",
@@ -1164,13 +1165,14 @@ B<modulus>, B<re>, B<unit> to the caller's namespace.
 
 =head1 PACKAGES
 
-The Symbols packages manipulate a sum of products representation of an
-algebraic equation. The B<Symbols> package is the user interface to the
-functionality supplied by the B<SymbolsSum> and B<SymbolsTerm> packages.
+The B<Symbols> packages manipulate a sum of products representation of
+an algebraic equation. The B<Symbols> package is the user interface to
+the functionality supplied by the B<Symbols::Sum> and B<Symbols::Term>
+packages.
 
-=head2 Math::Algebra::SymbolsTerm
+=head2 Math::Algebra::Symbols::Term
 
-B<SymbolsTerm> represents a product term. A product term consists of the
+B<Symbols::Term> represents a product term. A product term consists of the
 number B<1>, optionally multiplied by:
 
 =over
@@ -1215,16 +1217,16 @@ but not:
 
   $x + $y
 
-for which package B<SymbolsSum> is required. 
+for which package B<Symbols::Sum> is required. 
 
 
-=head2 Math::Algebra::SymbolsSum
+=head2 Math::Algebra::Symbols::Sum
 
-B<SymbolsSum> represents a sum of product terms supplied by
-B<SymbolsTerm> and thus behaves as a polynomial. Operations such as
+B<Symbols::Sum> represents a sum of product terms supplied by
+B<Symbols::Term> and thus behaves as a polynomial. Operations such as
 equation solving and differentiation are applied at this level.
 
-The main benefit of programming B<SymbolsTerm> and B<SymbolsSum> as two
+The main benefit of programming B<Symbols::Term> and B<Symbols::Sum> as two
 separate but related packages is Object Oriented Polymorphism. I.e. both
 packages need to multiply items together: each package has its own B<multiply> method,
 with Perl method lookup selecting the appropriate one as required. 

@@ -1,7 +1,7 @@
 NAME
-    User guide.
-
     Math::Algebra::Symbols - Symbolic Algebra in Pure Perl.
+
+    User guide.
 
 SYNOPSIS
     Example symbols.pl
@@ -300,7 +300,7 @@ DESCRIPTION
      ok(  (($a+$i*$b)^($a-$i*$b))  !=  $a**2+$b**2  );
      ok(  (($a+$i*$b)^($a-$i*$b)) <=> '$a**2-$b**2' );
  
-    Note the use of brackets. The ^ operator has low priority.
+    Note the use of brackets: The ^ operator has low priority.
 
     The ^ operator treats its left hand and right hand arguments as complex
     numbers, which in turn are regarded as two dimensional vectors to which
@@ -653,8 +653,8 @@ DESCRIPTION
     convert fractions to decimal expressions in case there is a loss of
     accuracy, however:
 
-     $e3 =~ /^(\d+)\/(\d+)$/;
-     $result = $1/$2;
+     my $e2 = $e->sub(x=>1);
+     $result = eval "$e2";
 
     or similar will produce approximate results.
 
@@ -751,7 +751,8 @@ DESCRIPTION
 
   Example of Equation Solving: the focii of a hyperbola:
      use Math::Algebra::Symbols;
-     ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
+
+     my ($a, $b, $x, $y, $i, $o) = symbols(qw(a b x y i 1));
 
      print
      "Hyperbola: Constant difference between distances from focii to locus of y=1/x",
@@ -809,10 +810,10 @@ EXPORTS
 PACKAGES
     The Symbols packages manipulate a sum of products representation of an
     algebraic equation. The Symbols package is the user interface to the
-    functionality supplied by the SymbolsSum and SymbolsTerm packages.
+    functionality supplied by the Symbols::Sum and Symbols::Term packages.
 
-  Math::Algebra::SymbolsTerm
-    SymbolsTerm represents a product term. A product term consists of the
+  Math::Algebra::Symbols::Term
+    Symbols::Term represents a product term. A product term consists of the
     number 1, optionally multiplied by:
 
     Variables
@@ -845,14 +846,14 @@ PACKAGES
 
       $x + $y
 
-    for which package SymbolsSum is required.
+    for which package Symbols::Sum is required.
 
-  Math::Algebra::SymbolsSum
-    SymbolsSum represents a sum of product terms supplied by SymbolsTerm and
-    thus behaves as a polynomial. Operations such as equation solving and
-    differentiation are applied at this level.
+  Math::Algebra::Symbols::Sum
+    Symbols::Sum represents a sum of product terms supplied by Symbols::Term
+    and thus behaves as a polynomial. Operations such as equation solving
+    and differentiation are applied at this level.
 
-    The main benefit of programming SymbolsTerm and SymbolsSum as two
+    The main benefit of programming Symbols::Term and Symbols::Sum as two
     separate but related packages is Object Oriented Polymorphism. I.e. both
     packages need to multiply items together: each package has its own
     multiply method, with Perl method lookup selecting the appropriate one
