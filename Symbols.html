@@ -44,6 +44,12 @@
 				<li><a href="#relational_operator:_eq">Relational operator: <strong>eq</strong></a></li>
 			</ul>
 
+			<li><a href="#implication_operators">Implication operators</a></li>
+			<ul>
+
+				<li><a href="#solve_operator:_>">Solve operator: <strong>&gt;</strong></a></li>
+			</ul>
+
 			<li><a href="#complex_operators">Complex operators</a></li>
 			<ul>
 
@@ -131,17 +137,17 @@
 <pre>
  ($n, $x, $y) = symbols(qw(n x y));</pre>
 <pre>
- $a = sin($x)**2 + cos($x)**2; 
- $b = ($x**8-1) / ($x-1);
- $c = (sin($n*$x)+cos($n*$x))-&gt;d-&gt;d-&gt;d-&gt;d/(sin($n*$x)+cos($n*$x));
- $d = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));</pre>
+  $a     = sin($x)**2 + cos($x)**2; 
+  $b     = (sin($n*$x)+cos($n*$x))-&gt;d-&gt;d-&gt;d-&gt;d/(sin($n*$x)+cos($n*$x)) == $n**4;
+  $c     = tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+ ($d,$e) = @{($x**2-5*$x+6) &gt; $x};</pre>
 <pre>
- print &quot;$a\n$b\n$c\n$d\n&quot;;</pre>
+ print &quot;$a\n$b\n$c\n$d,$e\n&quot;;</pre>
 <pre>
  # 1                                        
- # 1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
- # $n**4                                   
- # 1</pre>
+ # 1
+ # 1                                   
+ # 2,3</pre>
 <p>
 </p>
 <hr />
@@ -308,9 +314,46 @@ result.</p>
  print &quot;x=$z\n&quot;;</pre>
 <pre>
  # x=$v*$t</pre>
-<p>The relational operator <strong>eq</strong> is in fact a synonym for the minus <strong>-</strong>
-operator, with the expectation that later on the <a href="#solving_equations">solve()</a>
-function will be used to simplify and rearrange the equation.</p>
+<p>The relational operator <strong>eq</strong> is a synonym for the minus <strong>-</strong> operator,
+with the expectation that later on the <a href="#solving_equations">solve()</a>
+function will be used to simplify and rearrange the equation. You may
+prefer to use <strong>eq</strong> instead of <strong>-</strong> to enhace readability, ther si no
+functional difference.</p>
+<p>
+</p>
+<h3><a name="implication_operators">Implication operators</a></h3>
+<p>
+</p>
+<h4><a name="solve_operator:_>">Solve operator: <strong>&gt;</strong></a></h4>
+<pre>
+ use Math::Algebra::Symbols;</pre>
+<pre>
+ ($x, $v, $t) = symbols(qw(x v t));</pre>
+<pre>
+ $z = ($v eq $x / $t) &gt; [qw(x in terms of v t)];</pre>
+<pre>
+ print &quot;x=$z\n&quot;;</pre>
+<pre>
+ # x=$v*$t</pre>
+<p>The solve operator <strong>&gt;</strong> is a synonym for the <a href="#solving_equations">solve()</a> function.</p>
+<p>The priority of <strong>&gt;</strong> is higher than that of <strong>eq</strong>, so the brackets
+around the equation to be solved are necessary until Perl provides a
+mechanism for adjusting operator priority (cf. Algol 68).</p>
+<p>If the equation is in a single variable, the single variable
+may be named after the <strong>&gt;</strong> operator without the use of [...]:</p>
+<pre>
+ use Math::Algebra::Symbols;</pre>
+<pre>
+ my $rabbit  = 10 + 5 * $t;
+ my $fox     = 7 * $t * $t;
+ my ($a, $b) = @{($rabbit eq $fox) &gt; $t};</pre>
+<pre>
+ print &quot;$a\n&quot;;</pre>
+<pre>
+ # 1/14*sqrt(305)+5/14</pre>
+<p>If there are multiple solutions, (as in the case of polynomials), <strong>&gt;</strong>
+returns an array of symbolic expressions containing the solutions.</p>
+<p>This example was provided by Mike Schilli <a href="mailto:m@perlmeister.com.">m@perlmeister.com.</a></p>
 <p>
 </p>
 <h3><a name="complex_operators">Complex operators</a></h3>
@@ -554,6 +597,20 @@ known constants. There may of course be other unknown free variables in
 the equation to be solved: the proposed solution is automatically tested
 against the original equation to check that the proposed solution
 removes these variables, an error is reported via <strong>die()</strong> if it does not.</p>
+<pre>
+ use Math::Algebra::Symbols;
+ use symbols;</pre>
+<pre>
+ my ($x) = symbols(qw(x));</pre>
+<pre>
+ my  $p = $x**2-5*$x+6;        # Quadratic polynomial
+ my ($a, $b) = @{($p &gt; $x )};  # Solve for x</pre>
+<pre>
+ print &quot;x=$a,$b\n&quot;;            # Roots</pre>
+<pre>
+ # x=2,3</pre>
+<p>If there are multiple solutions, (as in the case of polynomials), <strong>solve()</strong>
+returns an array of symbolic expressions containing the solutions.</p>
 <p>
 </p>
 <h3><a name="methods_for_performing_calculus">Methods for performing Calculus</a></h3>
@@ -635,7 +692,7 @@ used in honor of Newton, Leibnitz, Cauchy.</p>
  &quot;\n  Difference in distances from focii&quot;,
  &quot;\n    From convenient point:            &quot;,  $A = abs($a - $f2) - abs($a - $f1),  
  &quot;\n    From general point:               &quot;,  $B = abs($b - $f2) + abs($b - $f1),
- &quot;\n\n  Solving for x we get:            x=&quot;, ($A eq $B)-&gt;solve(qw(x)),
+ &quot;\n\n  Solving for x we get:            x=&quot;, ($A - $B) &gt; $x,
  &quot;\n                         (should be: sqrt(2))&quot;,                        
  &quot;\n  Which is indeed constant, as was to be demonstrated\n&quot;;</pre>
 <p>This example demonstrates the power of symbolic processing by finding the

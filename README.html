@@ -31,14 +31,16 @@ Perl expressions algebraically:</p>
  ($n, $x, $y) = symbols(qw(n x y));</pre>
 <pre>
  $a = sin($x)**2 + cos($x)**2; 
- $b = (sin($n*$x)+cos($n*$x))-&gt;d-&gt;d-&gt;d-&gt;d/(sin($n*$x)+cos($n*$x));
- $c = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));</pre>
+ $b = (sin($n*$x)+cos($n*$x))-&gt;d-&gt;d-&gt;d-&gt;d/(sin($n*$x)+cos($n*$x)) == $n**4;
+ $c = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+($d, $e) = @{ $x**2-5*$x+6 &gt; $x };</pre>
 <pre>
- print &quot;$a\n$b\n$c\n&quot;;</pre>
+ print &quot;$a\n$b\n$c\n$d,$e\n&quot;;</pre>
 <pre>
  # 1                                        
- # $n**4                                   
- # 1</pre>
+ # 1                                   
+ # 1
+ # 2,3</pre>
 <p>This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.</p>
 <p>This is alpha code. It is written in pure Perl. It uses the standard

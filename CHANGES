@@ -1,3 +1,20 @@
+Changes
+    2004/06/02 1.17 Following further excellent suggestions from Mike
+    Schilli slightly improved notation for equation solving:
+
+    eq is a synonym for -
+
+    > is a synonym for solve()
+
+    Thus:
+
+      $x      = symbols('x');
+     ($a, $b) =  @{ ($x**2 eq 5*$x+6) > $x };  
+
+      print "$a,$b\n";
+
+     # 2,3
+
     2004/06/01 1.16 Following excellent suggestions from Mike Schilli detect
     constants with decimal places and convert them to rational fractions,
     thus 1.2 becomes 12/10. The rationale: using fractions avoids loss of

@@ -6,7 +6,7 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsSum;
-$VERSION = 1.16;
+$VERSION = 1.17;
 
 use Math::Algebra::SymbolsTerm;
 use IO::Handle;
@@ -561,8 +561,25 @@ sub powerof2($)
 sub solve($$)
  {my ($A, @x) = @_;
   croak 'Need variable to solve for' unless scalar(@x) > 0;
+
+  @x = @{$x[0]} if scalar(@x) == 1 and ref($x[0]) eq 'ARRAY';  # Array of variables supplied
+  my %x;
+  for my $x(@x)
+   {if (!ref $x)
+     {$x =~ /^[a-z]+$/i or croak "Cannot solve for: $x, not a variable name";
+     }
+    elsif (ref $x eq __PACKAGE__)
+     {my $t = $x->st; $t              or die "Cannot solve for multiple terms";
+      my @b = $t->v;  scalar(@b) == 1 or die "Can only solve for one variable";
+      my $p = $t->vp($b[0]);  $p == 1 or die "Can only solve by variable to power 1";
+      $x = $b[0];
+     }
+    else 
+     {die "$x is not a variable name";
+     }
+    $x{$x} = 1;
+   } 
   my $x = $x[0];
-  my %x; $x{$_} = 1 for @x;
   
   $B = $A->isZero;  # Eliminate sqrts and negative powers
 
@@ -595,7 +612,7 @@ sub solve($$)
   for my $t($D->t)
    {++$c if $t->vp($x) > 0;
    }
-  
+
   $n == 0             and croak "Equation not dependant on $x, so cannot solve for $x";
   $n  > 4 and $c > 1  and croak "Unable to solve polynomial or power $n > 4 in $x (Galois)";
  ($n  > 2 and $c > 1) and die   "Need solver for polynomial of degree $n in $x";
@@ -687,7 +704,7 @@ sub d($;$)
 
   if (defined($b))
    {if (!ref $b)
-     {$b =~ /^[a-z]+$/i or croak "Cannot differentiate by '$b'";
+     {$b =~ /^[a-z]+$/i or croak "Cannot differentiate by $b";
      }
     elsif (ref $b eq __PACKAGE__)
      {my $t = $b->st; $t              or die "Cannot differentiate by multiple terms";
@@ -1329,7 +1346,8 @@ use overload
  '**'    =>\&power3,
  '=='    =>\&equals3,
  '!='    =>\&nequal3,
- 'eq'    =>\&solve3, 
+ 'eq'    =>\&negate3, 
+ '>'     =>\&solve3, 
  '<=>'   =>\&tequals3,
  'sqrt'  =>\&sqrt3,
  'exp'   =>\&exp3,
@@ -1463,7 +1481,7 @@ sub tequals3
 sub solve3
  {my ($a, $b) = @_;
   $a->{z} or die "Solve using unfinalized sum";
-  $b =~ /^[a-z]+$/i or croak "Bad variable $b to solve for";
+# $b =~ /^[a-z]+$/i or croak "Bad variable $b to solve for";
   solve($a, $b);
  }
 
@@ -1972,17 +1990,17 @@ Math::Algebra::Symbols - Symbolic Algebra using Perl
 
  ($n, $x, $y) = symbols(qw(n x y));
 
- $a = sin($x)**2 + cos($x)**2; 
- $b = ($x**8-1) / ($x-1);
- $c = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x));
- $d = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+  $a     = sin($x)**2 + cos($x)**2; 
+  $b     = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x)) == $n**4;
+  $c     = tanh($x+$y) == (tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+ ($d,$e) = @{($x**2-5*$x+6) > $x};
 
- print "$a\n$b\n$c\n$d\n";
+ print "$a\n$b\n$c\n$d,$e\n";
 
  # 1                                        
- # 1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
- # $n**4                                   
- # 1                                        
+ # 1
+ # 1                                   
+ # 2,3                                        
 
 =head1 DESCRIPTION
 
@@ -2146,9 +2164,50 @@ result.
 
  # x=$v*$t
 
-The relational operator B<eq> is in fact a synonym for the minus B<->
-operator, with the expectation that later on the L<solve()|/Solving equations>
-function will be used to simplify and rearrange the equation.
+The relational operator B<eq> is a synonym for the minus B<-> operator,
+with the expectation that later on the L<solve()|/Solving equations>
+function will be used to simplify and rearrange the equation. You may
+prefer to use B<eq> instead of B<-> to enhace readability, ther si no
+functional difference.
+
+=head3 Implication operators
+
+=head4 Solve operator: B<E<gt>> 
+
+ use Math::Algebra::Symbols;
+
+ ($x, $v, $t) = symbols(qw(x v t));
+
+ $z = ($v eq $x / $t) > [qw(x in terms of v t)];
+
+ print "x=$z\n";
+
+ # x=$v*$t
+
+The solve operator B<E<gt>> is a synonym for the L<solve()|/Solving
+equations> function.
+
+The priority of B<E<gt>> is higher than that of B<eq>, so the brackets
+around the equation to be solved are necessary until Perl provides a
+mechanism for adjusting operator priority (cf. Algol 68).
+
+If the equation is in a single variable, the single variable
+may be named after the B<E<gt>> operator without the use of [...]:
+
+ use Math::Algebra::Symbols;
+
+ my $rabbit  = 10 + 5 * $t;
+ my $fox     = 7 * $t * $t;
+ my ($a, $b) = @{($rabbit eq $fox) > $t};
+
+ print "$a\n";
+
+ # 1/14*sqrt(305)+5/14
+
+If there are multiple solutions, (as in the case of polynomials), B<E<gt>>
+returns an array of symbolic expressions containing the solutions.
+
+This example was provided by Mike Schilli m@perlmeister.com.
 
 =head3 Complex operators
 
@@ -2394,6 +2453,21 @@ the equation to be solved: the proposed solution is automatically tested
 against the original equation to check that the proposed solution
 removes these variables, an error is reported via B<die()> if it does not.
 
+ use Math::Algebra::Symbols;
+ use symbols;
+
+ my ($x) = symbols(qw(x));
+
+ my  $p = $x**2-5*$x+6;        # Quadratic polynomial
+ my ($a, $b) = @{($p > $x )};  # Solve for x
+
+ print "x=$a,$b\n";            # Roots
+
+ # x=2,3
+
+If there are multiple solutions, (as in the case of polynomials), B<solve()>
+returns an array of symbolic expressions containing the solutions.
+
 =head3 Methods for performing Calculus
 
 =head4 Differentiation: B<d()>
@@ -2473,7 +2547,7 @@ used in honor of Newton, Leibnitz, Cauchy.
  "\n  Difference in distances from focii",
  "\n    From convenient point:            ",  $A = abs($a - $f2) - abs($a - $f1),  
  "\n    From general point:               ",  $B = abs($b - $f2) + abs($b - $f1),
- "\n\n  Solving for x we get:            x=", ($A eq $B)->solve(qw(x)),
+ "\n\n  Solving for x we get:            x=", ($A - $B) > $x,
  "\n                         (should be: sqrt(2))",                        
  "\n  Which is indeed constant, as was to be demonstrated\n";
 

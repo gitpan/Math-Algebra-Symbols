@@ -11,14 +11,16 @@ Math::Algebra::Symbols
      ($n, $x, $y) = symbols(qw(n x y));
 
      $a = sin($x)**2 + cos($x)**2; 
-     $b = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x));
+     $b = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x)) == $n**4;
      $c = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+    ($d, $e) = @{ $x**2-5*$x+6 > $x };  
 
-     print "$a\n$b\n$c\n";
+     print "$a\n$b\n$c\n$d,$e\n";
 
      # 1                                        
-     # $n**4                                   
-     # 1  
+     # 1                                   
+     # 1
+     # 2,3
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.

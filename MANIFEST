@@ -11,7 +11,8 @@ Symbols.pod
 SymbolsSum.pm
 SymbolsTerm.pm
 TODO   
-t/bugs.t
+t/bug_2004_6_1.t
+t/bug_2004_6_2.t
 t/complex.t
 t/cos.t
 t/differentiation.t
@@ -21,9 +22,11 @@ t/hyperbola.t
 t/hyperbolic.t
 t/parabola.t
 t/pentagon.t
+t/pod.t
 t/polynomial.t
 t/quadratic.t
 t/simple.t
 t/sin.t
+t/solve.t
 t/sqrt.t
 t/trigonometric.t

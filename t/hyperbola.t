@@ -22,7 +22,7 @@ no warnings qw(void);
 '  Distances from focii                 ',
 '    From first point:                  ',   $A = abs($a - $f2) - abs($a - $f1),  
 '    From second point:                 ',   $B = abs($b - $f2) + abs($b - $f1),
-'  Solve for difference in distances    ',   ok( (($A-$B) eq 'x') == sqrt(symbols('2')));
+'  Solve for difference in distances    ',   ok( (($A-$B) > $x) == sqrt(symbols('2')));
 
 exit(0);
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>i/CHANGES.pod</title>
+<title>Changes</title>
 <link rev="made" href="mailto:" />
 </head>
 
@@ -9,8 +9,30 @@
 
 <p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#changes">Changes</a></li>
+</ul>
 <!-- INDEX END -->
 
+<hr />
+<p>
+</p>
+<hr />
+<h1><a name="changes">Changes</a></h1>
+<p>2004/06/02 1.17 Following further excellent suggestions from Mike Schilli
+slightly improved notation for equation solving:</p>
+<p><strong>eq</strong> is a synonym for <strong>-</strong></p>
+<p><strong>&gt;</strong> is a synonym for <strong>solve()</strong></p>
+<p>Thus:</p>
+<pre>
+  $x      = symbols('x');
+ ($a, $b) =  @{ ($x**2 eq 5*$x+6) &gt; $x };</pre>
+<pre>
+  print &quot;$a,$b\n&quot;;</pre>
+<pre>
+ # 2,3</pre>
 <p>2004/06/01 1.16 Following excellent suggestions from Mike Schilli detect
 constants with decimal places and convert them to rational fractions,
 thus 1.2 becomes 12/10. The rationale: using fractions avoids loss of
