@@ -10,7 +10,7 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsTerm;
-$VERSION = 1.10;
+$VERSION = 1.11;
 
 use Carp;
 use Math::BigInt;  

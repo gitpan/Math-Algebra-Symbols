@@ -6,7 +6,7 @@
 #________________________________________________________________________
 
 package Math::Algebra::SymbolsSum;
-$VERSION = 1.10;
+$VERSION = 1.11;
 
 use Math::Algebra::SymbolsTerm;
 use IO::Handle;
