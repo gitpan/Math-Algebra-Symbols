@@ -1,9 +1,13 @@
 Makefile.PL
+Symbols.html
 Symbols.pm
-symbols.html
+SymbolsSum.pm
+SymbolsTerm.pm
 test.pl
 README
+README.html
 CHANGES
+CHANGES.html
 TODO   
 MANIFEST
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml  

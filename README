@@ -1,39 +1,62 @@
-Math::Algebra::Symbols - Symbolic Algebra using Perl.
+Math::Algebra::Symbols
+    Symbolic Algebra using Perl.
 
-Copyright Philip R Brenan, 2004
+    Copyright Philip R Brenan, 2004
 
-This package supplies a set of functions and operators to manipulate
-Perl expressions algebraically:
+    This package supplies a set of functions and operators to manipulate
+    Perl expressions algebraically:
 
- use symbols hyper=>1;
+     use symbols hyper=>1;
 
- ($n, $x, $y) = symbols(qw(n x y));
+     ($n, $x, $y) = symbols(qw(n x y));
 
- $a = sin($x)**2 + cos($x)**2; 
- $b = ($x**8-1) / ($x-1);
- $c = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x));
- $d = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
+     $a = sin($x)**2 + cos($x)**2; 
+     $b = (sin($n*$x)+cos($n*$x))->d->d->d->d/(sin($n*$x)+cos($n*$x));
+     $c = tanh($x+$y)==(tanh($x)+tanh($y))/(1+tanh($x)*tanh($y));
 
- print "$a\n$b\n$c\n$d\n";
+     print "$a\n$b\n$c\n";
 
- # 1                                        
- # 1+$x+$x**2+$x**3+$x**4+$x**5+$x**6+$x**7
- # $n**4                                   
- # 1  
+     # 1                                        
+     # $n**4                                   
+     # 1  
 
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself. 
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
 
-This is alpha code. It is written in pure Perl. It uses the standard
-Perl install mechanism. Documentation and Examples in pod at end of
-module.
+    This is alpha code. It is written in pure Perl. It uses the standard
+    Perl install mechanism or the ActiveState PPM Installer.
 
-I believe that we should try to capture all known Mathematics
-symbolically in Perl. Indeed, can you say that you know any Mathematics
-at all if you cannot explain it in Perl?
+    For a standard Perl install: download Math-Algebra-Symbols-1.05.tar.gz,
+    from CPAN: http://cpan.uwinnipeg.ca/dist/Math-Algebra-Symbols or from
+    SourceForge: https://sourceforge.net/projects/algeops/, untar and:
 
-Help with this project would be appreciated.
+      perl Makefile.PL
+      make
+      make test
+      make install
 
-For bug reports or suggestions please send email to:
-philiprbrenan@yahoo.com
+    If you are on Windows, use nmake, available at:
+
+    http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/Nmake15
+    .exe
+
+    For an ActiveState PPM Install: download
+    Math-Algebra-Symbols-XXX-PPD.tar.gz, to a local file, untar and:
+
+      ppm3.bat
+      repository add local file:://c:/downloads
+      search algebra
+      install
+
+    Use the directory into which you untarred in place of
+    file://c:/downloads
+
+    I believe that we should try to capture all known Mathematics
+    symbolically in Perl. Indeed, can you say that you know any Mathematics
+    at all if you cannot explain it in Perl?
+
+    Help with this project would be appreciated.
+
+    For bug reports or suggestions please send email to:
+    philiprbrenan@yahoo.com
 

@@ -1,5 +1,12 @@
-use Math::Algebra::Symbols;
+#!perl -w
+#______________________________________________________________________
+# Symbolic algebra.
+# Perl License.
+# PhilipRBrenan@yahoo.com, 2004.
+#______________________________________________________________________
 
-$x = symbols(qw(x));
+use Test::Harness;
 
-$x->test();
+@t = glob('t/*.pl');
+runtests(@t);
+

@@ -1,13 +1,13 @@
+    2004/03/28 Split into three classes. Considerable performance
+    improvements. Added standard Perl Test harness. Unfixed power() so we
+    aer back to constant powers.
 
-2004/03/14 Fixed power() so that it recognizes constant powers. Added
-TODO List. Finished testSM(): new requirements in TODO.
+    2004/03/14 Fixed power() so that it recognizes constant and variable
+    powers. Added TODO List. Finished testSM(): new requirements in TODO.
 
-2004/03/13 Added change log on esteemed advice of Steffen Müller. Made
-yet another attempt to stop polynomialDivide() from producing an
-infinite series as a representation of a single term. Most of
-mathematics seems to erupt from the division of one polynomial by
-another.
-
-I am carefully studying SM's work. Started testSM() to see whether I can
-reproduce his results.  Have reached test11.
+    2004/03/13 Added change log on esteemed advice of Steffen Müller. Made
+    yet another attempt to stop polynomialDivide() from producing an
+    infinite series as a representation of a single term. Most of
+    mathematics seems to erupt from the division of one polynomial by
+    another.
 
